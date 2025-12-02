@@ -1,4 +1,4 @@
-export PROJECTNAME=$(shell basename "$(PWD)")
+export PROJECTNAME=spy-sma-alert-bot
 
 .PHONY: $(shell grep -E '^[a-zA-Z0-9_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk -F: '{print $$1}')
 
@@ -36,7 +36,7 @@ test-single: ## Run a single test file (usage: make test-single TEST=test_config
 
 run: ## Run the application
 	@echo "🚀 Running $(PROJECTNAME)"
-	@uv run python -m delta_spread
+	@uv run python -m spy_sma_alert_bot.main
 
 clean: ## Clean build artifacts
 	@echo "🚀 Removing build artifacts"

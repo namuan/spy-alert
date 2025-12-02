@@ -79,7 +79,7 @@
   - **Property 10: Duplicate alert prevention (idempotence)**
   - **Validates: Requirements 4.2**
 
-- [ ] 7. Implement chart generation service
+- [x] 7. Implement chart generation service
   - Create ChartGenerator class using matplotlib
   - Implement generate_chart() to create price chart with SMA overlays
   - Configure chart to display at least 100 days of history
@@ -88,15 +88,15 @@
   - Implement format_chart_for_telegram() to export as bytes for Telegram
   - _Requirements: 7.1, 7.2, 7.3, 7.4_
 
-- [ ]* 7.1 Write property test for chart historical data completeness
+- [x]* 7.1 Write property test for chart historical data completeness
   - **Property 19: Chart historical data completeness**
   - **Validates: Requirements 7.2**
 
-- [ ]* 7.2 Write property test for chart SMA visual distinction
+- [x]* 7.2 Write property test for chart SMA visual distinction
   - **Property 20: Chart SMA visual distinction**
   - **Validates: Requirements 7.3**
 
-- [ ]* 7.3 Write property test for chart legend presence
+- [x]* 7.3 Write property test for chart legend presence
   - **Property 21: Chart legend presence**
   - **Validates: Requirements 7.4**
 

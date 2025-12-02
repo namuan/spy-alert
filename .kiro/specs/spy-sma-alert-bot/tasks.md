@@ -56,26 +56,26 @@
   - **Property 6: SMA calculation correctness**
   - **Validates: Requirements 3.1**
 
-- [ ] 6. Implement crossover detector
+- [x] 6. Implement crossover detector
   - Create CrossoverDetector class
   - Implement detect_crossovers() to identify when price crosses above/below SMAs
   - Implement update_crossover_state() to track current position relative to each SMA
   - Add state tracking to prevent duplicate alerts for same crossover
   - _Requirements: 4.2, 4.3_
 
-- [ ]* 6.1 Write property test for upward crossover detection
+- [x]* 6.1 Write property test for upward crossover detection
   - **Property 1: Upward crossover detection and notification**
   - **Validates: Requirements 1.1, 1.3, 1.5, 1.7**
 
-- [ ]* 6.2 Write property test for downward crossover detection
+- [x]* 6.2 Write property test for downward crossover detection
   - **Property 2: Downward crossover detection and notification**
   - **Validates: Requirements 1.2, 1.4, 1.6, 1.8**
 
-- [ ]* 6.3 Write property test for crossover detection accuracy
+- [x]* 6.3 Write property test for crossover detection accuracy
   - **Property 11: Crossover detection accuracy**
   - **Validates: Requirements 4.3**
 
-- [ ]* 6.4 Write property test for duplicate alert prevention
+- [x]* 6.4 Write property test for duplicate alert prevention
   - **Property 10: Duplicate alert prevention (idempotence)**
   - **Validates: Requirements 4.2**
 

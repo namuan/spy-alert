@@ -23,13 +23,13 @@
   - **Property 24: Required configuration validation**
   - **Validates: Requirements 8.4**
 
-- [ ] 3. Implement data models
+- [x] 3. Implement data models
   - Create PricePoint dataclass with timestamp and close price
   - Create Crossover dataclass with SMA period, direction, price, SMA value, and timestamp
   - Create CrossoverState dataclass for tracking position relative to SMAs
   - _Requirements: 3.1, 3.3_
 
-- [ ] 4. Implement price data service
+- [x] 4. Implement price data service
   - Create PriceDataService class with yfinance integration
   - Implement fetch_current_price() method
   - Implement fetch_historical_prices(days) method to retrieve at least 100 days
@@ -37,11 +37,11 @@
   - Add caching mechanism (5-minute cache) to minimize API calls
   - _Requirements: 3.2, 3.3_
 
-- [ ]* 4.1 Write property test for historical data sufficiency
+- [x] 4.1 Write property test for historical data sufficiency
   - **Property 7: Historical data sufficiency**
   - **Validates: Requirements 3.2**
 
-- [ ]* 4.2 Write property test for price data validation
+- [x] 4.2 Write property test for price data validation
   - **Property 8: Price data validation**
   - **Validates: Requirements 3.3**
 

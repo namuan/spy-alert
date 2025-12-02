@@ -45,14 +45,14 @@
   - **Property 8: Price data validation**
   - **Validates: Requirements 3.3**
 
-- [ ] 5. Implement SMA calculator
+- [x] 5. Implement SMA calculator
   - Create SMACalculator class
   - Implement calculate_sma(prices, period) to compute arithmetic mean
   - Implement calculate_all_smas(prices) to compute all four SMAs (25, 50, 75, 100)
   - Handle edge cases (insufficient data, empty lists)
   - _Requirements: 3.1_
 
-- [ ]* 5.1 Write property test for SMA calculation correctness
+- [x] 5.1 Write property test for SMA calculation correctness
   - **Property 6: SMA calculation correctness**
   - **Validates: Requirements 3.1**
 

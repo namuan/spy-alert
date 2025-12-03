@@ -132,7 +132,7 @@
   - **Property 13: Status message SMA display**
   - **Validates: Requirements 5.3**
 
-- [ ] 10. Implement Telegram bot command handlers
+- [x] 10. Implement Telegram bot command handlers
   - Create TelegramBot class with python-telegram-bot
   - Implement handle_start() command to subscribe users
   - Implement handle_stop() command to unsubscribe users
@@ -141,11 +141,11 @@
   - Integrate with MessageFormatter for response messages
   - _Requirements: 2.1, 2.2, 2.3, 7.5_
 
-- [ ]* 10.1 Write property test for status command completeness
+- [x]* 10.1 Write property test for status command completeness
   - **Property 5: Status command completeness**
   - **Validates: Requirements 2.3**
 
-- [ ]* 10.2 Write property test for chart inclusion in status response
+- [x]* 10.2 Write property test for chart inclusion in status response
   - **Property 22: Chart inclusion in status response**
   - **Validates: Requirements 7.5**
 

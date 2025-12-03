@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 
-import hypothesis.strategies as st
 from hypothesis import given, settings
+import hypothesis.strategies as st
 
 from spy_sma_alert_bot.services.message_formatter import MessageFormatter
 

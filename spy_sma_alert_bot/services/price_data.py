@@ -4,15 +4,18 @@ This module provides the PriceDataService class which handles fetching and valid
 SPY price data from yfinance, with caching and error handling capabilities.
 """
 
-from collections.abc import Iterator
+from collections.abc import Iterable
 from datetime import datetime, timedelta
 import time
-from typing import Protocol, SupportsFloat
+from typing import TYPE_CHECKING, Protocol, SupportsFloat, cast
 
 from pydantic import BaseModel
 import yfinance as yf
 
 from spy_sma_alert_bot.models import PricePoint
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 
 class CachedData(BaseModel):
@@ -123,20 +126,24 @@ class PriceDataService:
 
     @staticmethod
     def _collect_points_from_history(data: "HistoryLike") -> list[PricePoint]:
-        return [
-            PricePoint(
-                timestamp=(ts.to_pydatetime() if hasattr(ts, "to_pydatetime") else ts),
-                close=float(row["Close"]),
+        points: list[PricePoint] = []
+        for ts, row in data.iterrows():
+            if "Close" not in row:
+                continue
+            to_py_func = cast(
+                "Callable[[], datetime] | None", getattr(ts, "to_pydatetime", None)
             )
-            for ts, row in data.iterrows()
-            if "Close" in row
-        ]
+            ts_dt: datetime = (
+                to_py_func() if to_py_func is not None else cast("datetime", ts)
+            )
+            points.append(PricePoint(timestamp=ts_dt, close=float(row["Close"])))
+        return points
 
     def _fetch_price_points(
         self, spy: yf.Ticker, days: int, extra_days: int
     ) -> list[PricePoint]:
         data = spy.history(period=f"{days + extra_days}d")
-        if data.empty:
+        if getattr(data, "empty", False):
             raise ValueError("No historical data available")
 
         price_points = self._collect_points_from_history(data)
@@ -149,43 +156,32 @@ class PriceDataService:
 
         return price_points
 
+    @staticmethod
+    def validate_price_data(data: list[PricePoint]) -> bool:
+        if not data:
+            return False
+        now = datetime.now()
+        for point in data:
+            if point.timestamp is None or point.timestamp > now:
+                return False
+            if point.close <= 0:
+                return False
+            if point.close != point.close:
+                return False
+        return True
+
+    def clear_cache(self) -> None:
+        self._cache.clear()
+
 
 class RowLike(Protocol):
     def __contains__(self, __key: str) -> bool: ...
     def __getitem__(self, __key: str) -> SupportsFloat: ...
 
 
+class ColumnsLike(Protocol):
+    def __contains__(self, __key: str) -> bool: ...
+
+
 class HistoryLike(Protocol):
-    def iterrows(self) -> Iterator[tuple[object, RowLike]]: ...
-
-    @staticmethod
-    def validate_price_data(data: list[PricePoint]) -> bool:
-        """Validate price data for completeness and correctness.
-
-        Args:
-            data: List of PricePoint objects to validate.
-
-        Returns:
-            bool: True if data is valid, False otherwise.
-        """
-        if not data:
-            return False
-
-        for point in data:
-            # Check timestamp is not None and not in the future
-            if point.timestamp is None or point.timestamp > datetime.now():
-                return False
-
-            # Check close price is a positive number
-            if point.close is None or point.close <= 0:
-                return False
-
-            # Check for NaN values
-            if point.close != point.close:  # NaN check
-                return False
-
-        return True
-
-    def clear_cache(self) -> None:
-        """Clear the historical data cache."""
-        self._cache.clear()
+    def iterrows(self) -> Iterable[tuple[object, RowLike]]: ...

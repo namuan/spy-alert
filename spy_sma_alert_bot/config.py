@@ -44,8 +44,7 @@ def validate_config(config: BotConfig) -> None:
     # Validate required fields
     if not config.telegram_token:
         raise ValueError(
-            "Telegram token cannot be empty. "
-            "Please provide a valid Telegram bot token in the format 'digits:alphanumeric'."
+            "Telegram token cannot be empty. Please provide a valid Telegram bot token in the format 'digits:alphanumeric'."
         )
 
     if not config.chat_id:
@@ -56,28 +55,23 @@ def validate_config(config: BotConfig) -> None:
     # Validate Telegram token format
     if not re.match(r"^\d+:[a-zA-Z0-9_-]{35}$", config.telegram_token):
         raise ValueError(
-            "Invalid Telegram token format. "
-            "Expected format: 'digits:alphanumeric' (e.g., '123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11'). "
-            "Please check your token and ensure it matches the expected pattern."
+            "Invalid Telegram token format. Expected format: 'digits:alphanumeric' (e.g., '123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11'). Please check your token and ensure it matches the expected pattern."
         )
 
     # Validate numeric fields are positive integers
     if config.monitoring_interval is not None and config.monitoring_interval <= 0:
         raise ValueError(
-            f"Monitoring interval must be a positive integer. Got: {config.monitoring_interval}. "
-            "Please provide a positive integer value for MONITORING_INTERVAL."
+            f"Monitoring interval must be a positive integer. Got: {config.monitoring_interval}. Please provide a positive integer value for MONITORING_INTERVAL."
         )
 
     if config.sma_short_window is not None and config.sma_short_window <= 0:
         raise ValueError(
-            f"SMA short window must be a positive integer. Got: {config.sma_short_window}. "
-            "Please provide a positive integer value for SMA_SHORT_WINDOW."
+            f"SMA short window must be a positive integer. Got: {config.sma_short_window}. Please provide a positive integer value for SMA_SHORT_WINDOW."
         )
 
     if config.sma_long_window is not None and config.sma_long_window <= 0:
         raise ValueError(
-            f"SMA long window must be a positive integer. Got: {config.sma_long_window}. "
-            "Please provide a positive integer value for SMA_LONG_WINDOW."
+            f"SMA long window must be a positive integer. Got: {config.sma_long_window}. Please provide a positive integer value for SMA_LONG_WINDOW."
         )
 
     # Validate SMA window relationship
@@ -87,10 +81,32 @@ def validate_config(config: BotConfig) -> None:
         and config.sma_short_window >= config.sma_long_window
     ):
         raise ValueError(
-            f"SMA short window ({config.sma_short_window}) must be smaller than "
-            f"SMA long window ({config.sma_long_window}). "
-            "Please adjust the window sizes accordingly."
+            f"SMA short window ({config.sma_short_window}) must be smaller than SMA long window ({config.sma_long_window}). Please adjust the window sizes accordingly."
         )
+
+
+def _get_required_env(name: str) -> str:
+    value = os.getenv(name)
+    if value is None:
+        raise ValueError(f"Missing required environment variable: {name}")
+    return value
+
+
+def _parse_int_env(name: str) -> int | None:
+    value = os.getenv(name)
+    if value is None:
+        return None
+    try:
+        return int(value)
+    except ValueError:
+        raise ValueError(f"Invalid {name} value: {value}") from None
+
+
+def _parse_bool_env(name: str) -> bool | None:
+    value = os.getenv(name)
+    if value is None:
+        return None
+    return value.lower() in {"true", "1", "t", "y", "yes"}
 
 
 def load_config() -> BotConfig:
@@ -108,45 +124,17 @@ def load_config() -> BotConfig:
         ValueError: If required environment variables are missing or type conversion fails.
     """
     # Read and validate required environment variables
-    telegram_token = os.getenv("TELEGRAM_TOKEN")
-    if telegram_token is None:
-        raise ValueError("Missing required environment variable: TELEGRAM_TOKEN")
-
-    chat_id = os.getenv("TELEGRAM_CHAT_ID")
-    if chat_id is None:
-        raise ValueError("Missing required environment variable: TELEGRAM_CHAT_ID")
+    telegram_token = _get_required_env("TELEGRAM_TOKEN")
+    chat_id = _get_required_env("TELEGRAM_CHAT_ID")
 
     # Read optional environment variables with type conversion
-    monitoring_interval = os.getenv("MONITORING_INTERVAL")
-    if monitoring_interval is not None:
-        try:
-            monitoring_interval = int(monitoring_interval)
-        except ValueError:
-            raise ValueError(
-                f"Invalid MONITORING_INTERVAL value: {monitoring_interval}"
-            ) from None
+    monitoring_interval = _parse_int_env("MONITORING_INTERVAL")
 
-    sma_short_window = os.getenv("SMA_SHORT_WINDOW")
-    if sma_short_window is not None:
-        try:
-            sma_short_window = int(sma_short_window)
-        except ValueError:
-            raise ValueError(
-                f"Invalid SMA_SHORT_WINDOW value: {sma_short_window}"
-            ) from None
+    sma_short_window = _parse_int_env("SMA_SHORT_WINDOW")
 
-    sma_long_window = os.getenv("SMA_LONG_WINDOW")
-    if sma_long_window is not None:
-        try:
-            sma_long_window = int(sma_long_window)
-        except ValueError:
-            raise ValueError(
-                f"Invalid SMA_LONG_WINDOW value: {sma_long_window}"
-            ) from None
+    sma_long_window = _parse_int_env("SMA_LONG_WINDOW")
 
-    debug = os.getenv("DEBUG")
-    if debug is not None:
-        debug = debug.lower() in {"true", "1", "t", "y", "yes"}
+    debug = _parse_bool_env("DEBUG")
 
     config_args: dict[str, Any] = {
         "telegram_token": telegram_token,

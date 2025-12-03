@@ -61,6 +61,7 @@ class ChartGenerator:
         prices = prices[-ChartGenerator.MIN_DAYS :]
         dates = [p.timestamp for p in prices]
         closes = [p.close for p in prices]
+        date_nums = mdates.date2num(dates)
 
         # Compute historical SMAs using SMACalculator
         sma_history: dict[int, list[float | None]] = {}
@@ -79,12 +80,14 @@ class ChartGenerator:
         fig.patch.set_facecolor("white")
         fig.patch.set_alpha(1.0)
         ax.set_facecolor("white")
-        ax.plot(dates, closes, label="SPY Close", color="black", linewidth=1.5)
+        ax.plot(date_nums, closes, label="SPY Close", color="black", linewidth=1.5)
 
         colors = ["blue", "orange", "green", "red"]
         for period, color in zip(sma_periods, colors, strict=False):
-            sma_vals = sma_history[period]
-            ax.plot(dates, sma_vals, label=f"SMA {period}", color=color, linewidth=1.5)
+            sma_vals = np.array(sma_history[period], dtype=float)
+            ax.plot(
+                date_nums, sma_vals, label=f"SMA {period}", color=color, linewidth=1.5
+            )
 
         # Formatting
         ax.set_title("SPY Price with SMA Overlays")

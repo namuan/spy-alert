@@ -42,7 +42,7 @@ class Crossover:
     direction: Literal["above", "below"]
     price: float
     sma_value: float
-    timestamp: datetime
+    timestamp: datetime | None
 
 
 @dataclass

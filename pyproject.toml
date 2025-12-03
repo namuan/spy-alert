@@ -113,10 +113,6 @@ max-nested-blocks = 3  # Maximum nested block depth (PLR1702)
     "ANN",     # Don't require annotations in tests
     "FBT",     # Allow boolean args in tests
 ]
-"spy_sma_alert_bot/config.py" = [
-    "C901",
-    "PLR0912",
-]
 
 [tool.ruff.lint.isort]
 known-first-party = ["spy_sma_alert_bot"]
@@ -221,7 +217,7 @@ reportGeneralTypeIssues = false
 reportPropertyTypeMismatch = true
 reportFunctionMemberAccess = true
 reportCallInDefaultInitializer = true
-reportImplicitStringConcatenation = false
+reportImplicitStringConcatenation = true
 
 # ============================================================
 # ADDITIONAL STRICT CHECKS (Progressive Enhancement)
@@ -255,7 +251,6 @@ exclude = [
     "dist",
     "*.egg-info",
     "tests/**",
-    "spy_sma_alert_bot/services/**",
 ]
 
 venvPath = "."

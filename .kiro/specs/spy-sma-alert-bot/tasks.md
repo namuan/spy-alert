@@ -117,18 +117,18 @@
   - **Property 4: User subscription cancellation**
   - **Validates: Requirements 2.2**
 
-- [ ] 9. Implement message formatting utilities
+- [x] 9. Implement message formatting utilities
   - Create MessageFormatter class
   - Implement format_crossover_message() with all required fields (direction, SMA period, price, SMA value, timestamp)
   - Implement format_status_message() with subscription status, current price, and all SMA values
   - Implement format_confirmation_messages() for subscribe/unsubscribe
   - _Requirements: 5.1, 5.2, 5.3_
 
-- [ ]* 9.1 Write property test for crossover message completeness
+- [x]* 9.1 Write property test for crossover message completeness
   - **Property 12: Crossover message completeness**
   - **Validates: Requirements 5.1, 5.2**
 
-- [ ]* 9.2 Write property test for status message SMA display
+- [x]* 9.2 Write property test for status message SMA display
   - **Property 13: Status message SMA display**
   - **Validates: Requirements 5.3**
 

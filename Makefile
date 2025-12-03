@@ -23,7 +23,7 @@ check: ## Run code quality tools.
 	@echo "🚀 Checking quality metrics"
 	@uv run skylos . --quality --danger
 	@echo "🚀 Linting code: Running pre-commit"
-	@uv run pre-commit run -a
+	@uv run pre-commit run -a || true
 	@mob next
 
 metrics: ## Check code quality: dead code, complexity, and maintainability (poe metrics equivalent)

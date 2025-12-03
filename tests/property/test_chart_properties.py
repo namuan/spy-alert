@@ -4,29 +4,32 @@ This module contains property-based tests for the ChartGenerator class,
 verifying universal properties across many randomly generated inputs.
 """
 
-from typing import List
+from datetime import datetime
 import io
-import numpy as np
-from PIL import Image
-from datetime import datetime, timedelta
-from hypothesis import given, settings, strategies as st
-from hypothesis import assume
-import pytest
 
-from spy_sma_alert_bot.services.chart_generator import ChartGenerator
+from hypothesis import given, settings, strategies as st
+from PIL import Image
+
 from spy_sma_alert_bot.models import PricePoint
+from spy_sma_alert_bot.services.chart_generator import ChartGenerator
+
 
 # Feature: spy-sma-alert-bot, Property 19: Chart historical data completeness # Validates: Requirements 7.2
 @settings(max_examples=100, deadline=None)
-@given(prices=st.lists(
-    st.builds(
-        PricePoint,
-        timestamp=st.datetimes(min_value=datetime(2024, 1, 1), max_value=datetime(2030, 1, 1)),
-        close=st.floats(min_value=300, max_value=600)
-    ),
-    min_size=100, max_size=200
-))
-def test_chart_historical_data_completeness(prices: List[PricePoint]) -> None:
+@given(
+    prices=st.lists(
+        st.builds(
+            PricePoint,
+            timestamp=st.datetimes(
+                min_value=datetime(2024, 1, 1), max_value=datetime(2030, 1, 1)
+            ),
+            close=st.floats(min_value=300, max_value=600),
+        ),
+        min_size=100,
+        max_size=200,
+    )
+)
+def test_chart_historical_data_completeness(prices: list[PricePoint]) -> None:
     """Property test for chart historical data completeness.
 
     For any sufficient historical price data (100-200 points), ChartGenerator should
@@ -41,21 +44,26 @@ def test_chart_historical_data_completeness(prices: List[PricePoint]) -> None:
     chart_bytes = ChartGenerator().generate_chart(prices)
     assert len(chart_bytes) > 5000  # Ensures chart generated (non-trivial PNG size)
     img = Image.open(io.BytesIO(chart_bytes))
-    assert img.mode in ('RGB', 'RGBA')
+    assert img.mode in {"RGB", "RGBA"}
     assert img.size[0] > 500
     assert img.size[1] > 500
 
+
 # Feature: spy-sma-alert-bot, Property 20: Chart SMA visual distinction # Validates: Requirements 7.3
 @settings(max_examples=100, deadline=None)
-@given(prices=st.lists(
-    st.builds(
-        PricePoint,
-        timestamp=st.datetimes(min_value=datetime(2024, 1, 1), max_value=datetime(2030, 1, 1)),
-        close=st.floats(min_value=300, max_value=600)
-    ),
-    min_size=100
-))
-def test_chart_sma_visual_distinction(prices: List[PricePoint]) -> None:
+@given(
+    prices=st.lists(
+        st.builds(
+            PricePoint,
+            timestamp=st.datetimes(
+                min_value=datetime(2024, 1, 1), max_value=datetime(2030, 1, 1)
+            ),
+            close=st.floats(min_value=300, max_value=600),
+        ),
+        min_size=100,
+    )
+)
+def test_chart_sma_visual_distinction(prices: list[PricePoint]) -> None:
     """Property test for chart SMA visual distinction.
 
     Ensures chart generates successfully as RGB image with sufficient size for varying data,
@@ -70,21 +78,26 @@ def test_chart_sma_visual_distinction(prices: List[PricePoint]) -> None:
     chart_bytes = ChartGenerator().generate_chart(prices)
     assert len(chart_bytes) > 5000
     img = Image.open(io.BytesIO(chart_bytes))
-    assert img.mode in ('RGB', 'RGBA')
+    assert img.mode in {"RGB", "RGBA"}
     assert img.size[0] > 500
     assert img.size[1] > 500
 
+
 # Feature: spy-sma-alert-bot, Property 21: Chart legend presence # Validates: Requirements 7.4
 @settings(max_examples=100, deadline=None)
-@given(prices=st.lists(
-    st.builds(
-        PricePoint,
-        timestamp=st.datetimes(min_value=datetime(2024, 1, 1), max_value=datetime(2030, 1, 1)),
-        close=st.floats(min_value=300, max_value=600)
-    ),
-    min_size=100
-))
-def test_chart_legend_presence(prices: List[PricePoint]) -> None:
+@given(
+    prices=st.lists(
+        st.builds(
+            PricePoint,
+            timestamp=st.datetimes(
+                min_value=datetime(2024, 1, 1), max_value=datetime(2030, 1, 1)
+            ),
+            close=st.floats(min_value=300, max_value=600),
+        ),
+        min_size=100,
+    )
+)
+def test_chart_legend_presence(prices: list[PricePoint]) -> None:
     """Property test for chart legend presence.
 
     Ensures chart generates wide enough RGB image to accommodate legend.
@@ -98,5 +111,7 @@ def test_chart_legend_presence(prices: List[PricePoint]) -> None:
     chart_bytes = ChartGenerator().generate_chart(prices)
     assert len(chart_bytes) > 5000
     img = Image.open(io.BytesIO(chart_bytes))
-    assert img.mode in ('RGB', 'RGBA')
-    assert img.size[0] > 800  # Ensures figsize=(12,6) at dpi=100 renders wide enough for legend
+    assert img.mode in {"RGB", "RGBA"}
+    assert (
+        img.size[0] > 800
+    )  # Ensures figsize=(12,6) at dpi=100 renders wide enough for legend

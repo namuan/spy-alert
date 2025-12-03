@@ -9,7 +9,8 @@ Feature: spy-sma-alert-bot, Property 6: For any sequence of closing prices and a
 the calculated SMA should equal the arithmetic mean of the last N closing prices.
 """
 
-from typing import List, Dict, Optional
+from typing import ClassVar
+
 
 class SMACalculator:
     """Calculator for Simple Moving Averages (SMAs).
@@ -22,10 +23,10 @@ class SMACalculator:
         DEFAULT_PERIODS: The default SMA periods to calculate (25, 50, 75, 100-day).
     """
 
-    DEFAULT_PERIODS = [25, 50, 75, 100]
+    DEFAULT_PERIODS: ClassVar[list[int]] = [25, 50, 75, 100]
 
     @staticmethod
-    def calculate_sma(prices: List[float], period: int) -> Optional[float]:
+    def calculate_sma(prices: list[float], period: int) -> float | None:
         """Calculate the Simple Moving Average for a given period.
 
         Args:
@@ -54,7 +55,7 @@ class SMACalculator:
         return sum(window) / period
 
     @classmethod
-    def calculate_all_smas(cls, prices: List[float]) -> Dict[int, Optional[float]]:
+    def calculate_all_smas(cls, prices: list[float]) -> dict[int, float | None]:
         """Calculate all four default SMAs (25, 50, 75, 100-day).
 
         Args:
@@ -65,9 +66,8 @@ class SMACalculator:
             Values are None if there's insufficient data for a given period.
         """
         if not prices:
-            return {period: None for period in cls.DEFAULT_PERIODS}
+            return dict.fromkeys(cls.DEFAULT_PERIODS)
 
         return {
-            period: cls.calculate_sma(prices, period)
-            for period in cls.DEFAULT_PERIODS
+            period: cls.calculate_sma(prices, period) for period in cls.DEFAULT_PERIODS
         }

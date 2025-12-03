@@ -4,7 +4,6 @@ This module contains property-based tests for the SMACalculator class,
 verifying universal properties across many randomly generated inputs.
 """
 
-from typing import List
 import math
 
 from hypothesis import given, settings, strategies as st
@@ -12,13 +11,16 @@ import pytest
 
 from spy_sma_alert_bot.services.sma_calculator import SMACalculator
 
+
 # Feature: spy-sma-alert-bot, Property 6: SMA calculation correctness
 @settings(max_examples=100, deadline=None)
 @given(
-    prices=st.lists(st.floats(min_value=0.01, max_value=1000.0), min_size=0, max_size=200),
-    period=st.integers(min_value=1, max_value=100)
+    prices=st.lists(
+        st.floats(min_value=0.01, max_value=1000.0), min_size=0, max_size=200
+    ),
+    period=st.integers(min_value=1, max_value=100),
 )
-def test_sma_calculation_correctness(prices: List[float], period: int) -> None:
+def test_sma_calculation_correctness(prices: list[float], period: int) -> None:
     """Property test for SMA calculation correctness.
 
     For any sequence of closing prices and any SMA period N, the calculated SMA should
@@ -36,7 +38,9 @@ def test_sma_calculation_correctness(prices: List[float], period: int) -> None:
     # Handle edge cases
     if not prices or len(prices) < period:
         # Insufficient data - should return None
-        assert calculated_sma is None, f"Expected None for insufficient data, got {calculated_sma}"
+        assert (
+            calculated_sma is None
+        ), f"Expected None for insufficient data, got {calculated_sma}"
     else:
         # Sufficient data - should return arithmetic mean
         window = prices[-period:]
@@ -48,6 +52,7 @@ def test_sma_calculation_correctness(prices: List[float], period: int) -> None:
             f"SMA calculation incorrect: expected {expected_sma}, got {calculated_sma}. "
             f"Prices: {prices}, period: {period}, window: {window}"
         )
+
 
 def test_sma_calculation_edge_cases() -> None:
     """Test edge cases for SMA calculation."""
@@ -69,6 +74,7 @@ def test_sma_calculation_edge_cases() -> None:
 
     with pytest.raises(ValueError):
         SMACalculator.calculate_sma([1.0, 2.0, 3.0], -5)
+
 
 def test_calculate_all_smas() -> None:
     """Test the calculate_all_smas method."""

@@ -6,12 +6,12 @@ with SMA overlays, formatted for Telegram delivery, with visual styling for clar
 Feature: spy-sma-alert-bot, Requirements 7.2 (100 days), 7.3 (distinguishable lines), 7.4 (legend).
 """
 
-from typing import List, Dict, Optional
-import matplotlib.pyplot as plt
-import matplotlib.dates as mdates
-import numpy as np
-from datetime import datetime
 from io import BytesIO
+from typing import ClassVar
+
+import matplotlib.dates as mdates
+import matplotlib.pyplot as plt
+import numpy as np
 
 from ..models import PricePoint
 from .sma_calculator import SMACalculator
@@ -24,8 +24,11 @@ class ChartGenerator:
     apply visual styling for clarity.
     """
 
+    MIN_DAYS: ClassVar[int] = 100
+
+    @staticmethod
     def generate_chart(
-        self, prices: List[PricePoint], sma_periods: List[int] = [25, 50, 75, 100]
+        prices: list[PricePoint], sma_periods: list[int] | None = None
     ) -> bytes:
         """Generate a chart of SPY closing prices with SMA overlays.
 
@@ -49,33 +52,37 @@ class ChartGenerator:
         Raises:
             ValueError: If fewer than 100 price points provided.
         """
-        if len(prices) < 100:
+        if sma_periods is None:
+            sma_periods = [25, 50, 75, 100]
+        if len(prices) < ChartGenerator.MIN_DAYS:
             raise ValueError("Insufficient historical data: need at least 100 days")
 
         # Truncate to display last 100 trading days
-        prices = prices[-100:]
+        prices = prices[-ChartGenerator.MIN_DAYS :]
         dates = [p.timestamp for p in prices]
         closes = [p.close for p in prices]
 
         # Compute historical SMAs using SMACalculator
-        sma_history: Dict[int, List[Optional[float]]] = {}
+        sma_history: dict[int, list[float | None]] = {}
         for period in sma_periods:
             early_padding = [np.nan] * (period - 1)
             historical_smas = [
-                SMACalculator.calculate_sma([prices[j].close for j in range(i + 1)], period)
+                SMACalculator.calculate_sma(
+                    [prices[j].close for j in range(i + 1)], period
+                )
                 for i in range(period - 1, len(prices))
             ]
             sma_history[period] = early_padding + historical_smas
 
         # Plot
         fig, ax = plt.subplots(figsize=(12, 6))
-        fig.patch.set_facecolor('white')
+        fig.patch.set_facecolor("white")
         fig.patch.set_alpha(1.0)
-        ax.set_facecolor('white')
+        ax.set_facecolor("white")
         ax.plot(dates, closes, label="SPY Close", color="black", linewidth=1.5)
 
         colors = ["blue", "orange", "green", "red"]
-        for period, color in zip(sma_periods, colors):
+        for period, color in zip(sma_periods, colors, strict=False):
             sma_vals = sma_history[period]
             ax.plot(dates, sma_vals, label=f"SMA {period}", color=color, linewidth=1.5)
 
@@ -90,7 +97,14 @@ class ChartGenerator:
 
         # Export to PNG bytes
         buf = BytesIO()
-        fig.savefig(buf, format="png", dpi=150, bbox_inches="tight", facecolor="white", transparent=False)
+        fig.savefig(
+            buf,
+            format="png",
+            dpi=150,
+            bbox_inches="tight",
+            facecolor="white",
+            transparent=False,
+        )
         buf.seek(0)
-        plt.close('all')
+        plt.close("all")
         return buf.read()

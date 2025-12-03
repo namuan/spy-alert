@@ -5,15 +5,15 @@ verifying universal properties across many randomly generated inputs.
 """
 
 import datetime
-from typing import List
 from unittest.mock import patch
 
-import pytest
 from hypothesis import given, settings, strategies as st
 from hypothesis.strategies import composite
+import pandas as pd
 
 from spy_sma_alert_bot.models import PricePoint
 from spy_sma_alert_bot.services.price_data import PriceDataService
+
 
 # Feature: spy-sma-alert-bot, Property 7: Historical data sufficiency
 @settings(max_examples=100, deadline=None)
@@ -29,32 +29,35 @@ def test_historical_data_sufficiency(days: int) -> None:
     Validates: Requirement 3.2
     """
     # Mock yfinance to avoid real API calls
-    with patch('spy_sma_alert_bot.services.price_data.yf.Ticker') as mock_ticker:
-        # Setup mock data - create 150 days of data to ensure we have enough
-        mock_data = []
-        base_date = datetime.datetime.now() - datetime.timedelta(days=150)
-
-        for i in range(150):
-            mock_data.append({
-                'Close': 400.0 + i * 0.1,
-                'timestamp': base_date + datetime.timedelta(days=i)
-            })
-
-        # Configure mock
+    with patch("spy_sma_alert_bot.services.price_data.yf.Ticker") as mock_ticker:
         mock_ticker_instance = mock_ticker.return_value
         mock_history = mock_ticker_instance.history
-        mock_history.return_value = mock_history.return_value.__class__(
-            data=mock_data,
-            index=[item['timestamp'] for item in mock_data],
-            columns=['Close']
-        )
 
-        # Create service and fetch data
+        def make_df(n: int) -> pd.DataFrame:
+            start = datetime.datetime.now() - datetime.timedelta(days=n)
+            idx = [start + datetime.timedelta(days=i) for i in range(n)]
+            close = [400.0 + i * 0.1 for i in range(n)]
+            return pd.DataFrame({"Close": close}, index=idx)
+
+        def history_side_effect(period: str | None = None):
+            if period and isinstance(period, str) and period.endswith("d"):
+                try:
+                    n = int(period[:-1])
+                except ValueError:
+                    n = 150
+            else:
+                n = 150
+            return make_df(n)
+
+        mock_history.side_effect = history_side_effect
+
         service = PriceDataService()
         result = service.fetch_historical_prices(days)
 
         # Assert that we always get at least 100 days of data
-        assert len(result) >= 100, f"Expected at least 100 days of data, got {len(result)}"
+        assert (
+            len(result) >= 100
+        ), f"Expected at least 100 days of data, got {len(result)}"
 
         # Verify all data points are valid PricePoint objects
         for point in result:
@@ -63,81 +66,101 @@ def test_historical_data_sufficiency(days: int) -> None:
             assert isinstance(point.close, float)
             assert point.close > 0
 
+
 # Feature: spy-sma-alert-bot, Property 8: Price data validation
 @composite
 def price_point_strategy(draw: st.DrawFn) -> PricePoint:
     """Generate valid PricePoint objects for testing."""
-    timestamp = draw(st.datetimes(
-        min_value=datetime.datetime(2020, 1, 1),
-        max_value=datetime.datetime.now()
-    ))
+    timestamp = draw(
+        st.datetimes(
+            min_value=datetime.datetime(2020, 1, 1), max_value=datetime.datetime.now()
+        )
+    )
     close = draw(st.floats(min_value=0.01, max_value=1000.0))
     return PricePoint(timestamp=timestamp, close=close)
+
 
 @composite
 def invalid_price_point_strategy(draw: st.DrawFn) -> dict:
     """Generate invalid price point data for testing."""
-    # Choose which type of invalid data to generate
-    invalid_type = draw(st.sampled_from([
-        "missing_timestamp",
-        "missing_close",
-        "future_timestamp",
-        "negative_price",
-        "zero_price",
-        "nan_price"
-    ]))
+    invalid_type = draw(
+        st.sampled_from([
+            "missing_timestamp",
+            "missing_close",
+            "future_timestamp",
+            "negative_price",
+            "zero_price",
+            "nan_price",
+        ])
+    )
 
+    result: dict
     if invalid_type == "missing_timestamp":
-        return {"close": draw(st.floats(min_value=0.01, max_value=1000.0))}
+        result = {"close": draw(st.floats(min_value=0.01, max_value=1000.0))}
     elif invalid_type == "missing_close":
-        return {"timestamp": draw(st.datetimes(
-            min_value=datetime.datetime(2020, 1, 1),
-            max_value=datetime.datetime.now()
-        ))}
+        result = {
+            "timestamp": draw(
+                st.datetimes(
+                    min_value=datetime.datetime(2020, 1, 1),
+                    max_value=datetime.datetime.now(),
+                )
+            )
+        }
     elif invalid_type == "future_timestamp":
-        return {
-            "timestamp": draw(st.datetimes(
-                min_value=datetime.datetime.now() + datetime.timedelta(days=1),
-                max_value=datetime.datetime.now() + datetime.timedelta(days=365)
-            )),
-            "close": draw(st.floats(min_value=0.01, max_value=1000.0))
+        result = {
+            "timestamp": draw(
+                st.datetimes(
+                    min_value=datetime.datetime.now() + datetime.timedelta(days=1),
+                    max_value=datetime.datetime.now() + datetime.timedelta(days=365),
+                )
+            ),
+            "close": draw(st.floats(min_value=0.01, max_value=1000.0)),
         }
     elif invalid_type == "negative_price":
-        return {
-            "timestamp": draw(st.datetimes(
-                min_value=datetime.datetime(2020, 1, 1),
-                max_value=datetime.datetime.now()
-            )),
-            "close": draw(st.floats(min_value=-1000.0, max_value=-0.01))
+        result = {
+            "timestamp": draw(
+                st.datetimes(
+                    min_value=datetime.datetime(2020, 1, 1),
+                    max_value=datetime.datetime.now(),
+                )
+            ),
+            "close": draw(st.floats(min_value=-1000.0, max_value=-0.01)),
         }
     elif invalid_type == "zero_price":
-        return {
-            "timestamp": draw(st.datetimes(
-                min_value=datetime.datetime(2020, 1, 1),
-                max_value=datetime.datetime.now()
-            )),
-            "close": 0.0
+        result = {
+            "timestamp": draw(
+                st.datetimes(
+                    min_value=datetime.datetime(2020, 1, 1),
+                    max_value=datetime.datetime.now(),
+                )
+            ),
+            "close": 0.0,
         }
-    elif invalid_type == "nan_price":
-        return {
-            "timestamp": draw(st.datetimes(
-                min_value=datetime.datetime(2020, 1, 1),
-                max_value=datetime.datetime.now()
-            )),
-            "close": float('nan')
+    else:
+        result = {
+            "timestamp": draw(
+                st.datetimes(
+                    min_value=datetime.datetime(2020, 1, 1),
+                    max_value=datetime.datetime.now(),
+                )
+            ),
+            "close": float("nan"),
         }
+    return result
+
 
 @settings(max_examples=100, deadline=None)
 @given(valid_data=st.lists(price_point_strategy(), min_size=1, max_size=50))
-def test_price_data_validation_valid_data(valid_data: List[PricePoint]) -> None:
+def test_price_data_validation_valid_data(valid_data: list[PricePoint]) -> None:
     """Test that validate_price_data accepts valid data."""
     service = PriceDataService()
     result = service.validate_price_data(valid_data)
     assert result is True, "Valid data should be accepted"
 
+
 @settings(max_examples=100, deadline=None)
 @given(invalid_data=st.lists(invalid_price_point_strategy(), min_size=1, max_size=10))
-def test_price_data_validation_invalid_data(invalid_data: List[dict]) -> None:
+def test_price_data_validation_invalid_data(invalid_data: list[dict]) -> None:
     """Test that validate_price_data rejects invalid data."""
     # Convert dicts to PricePoint objects where possible
     price_points = []
@@ -149,17 +172,18 @@ def test_price_data_validation_invalid_data(invalid_data: List[dict]) -> None:
         except (TypeError, ValueError):
             # If we can't create a PricePoint, that's also invalid data
             # We'll test with None or empty dicts in some cases
-            if 'timestamp' in item and 'close' in item:
+            if "timestamp" in item and "close" in item:
                 price_points.append(PricePoint(**item))
             else:
                 # For missing fields, we'll create a PricePoint with None values
-                timestamp = item.get('timestamp', None)
-                close = item.get('close', None)
+                timestamp = item.get("timestamp", None)
+                close = item.get("close", None)
                 price_points.append(PricePoint(timestamp=timestamp, close=close))
 
     service = PriceDataService()
     result = service.validate_price_data(price_points)
     assert result is False, "Invalid data should be rejected"
+
 
 def test_price_data_validation_edge_cases() -> None:
     """Test edge cases for price data validation."""
@@ -172,15 +196,11 @@ def test_price_data_validation_edge_cases() -> None:
     assert service.validate_price_data(None) is False  # type: ignore
 
     # Single valid point
-    valid_point = PricePoint(
-        timestamp=datetime.datetime.now(),
-        close=420.69
-    )
+    valid_point = PricePoint(timestamp=datetime.datetime.now(), close=420.69)
     assert service.validate_price_data([valid_point]) is True
 
     # Single invalid point (future timestamp)
     invalid_point = PricePoint(
-        timestamp=datetime.datetime.now() + datetime.timedelta(days=1),
-        close=420.69
+        timestamp=datetime.datetime.now() + datetime.timedelta(days=1), close=420.69
     )
     assert service.validate_price_data([invalid_point]) is False

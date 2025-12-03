@@ -105,7 +105,7 @@ def calculate_all_smas(prices: List[float]) -> Dict[int, float]
 
 **Key Methods:**
 ```python
-def detect_crossovers(current_price: float, previous_price: float, 
+def detect_crossovers(current_price: float, previous_price: float,
                       smas: Dict[int, float], previous_states: Dict[int, str]) -> List[Crossover]
 def update_crossover_state(smas: Dict[int, float], current_price: float) -> Dict[int, str]
 ```
@@ -319,7 +319,7 @@ The testing strategy employs both unit testing and property-based testing to ens
 Unit tests will verify specific examples and integration points:
 
 1. **Command Handlers**: Test /start, /stop, /status commands with specific user IDs
-2. **Edge Cases**: 
+2. **Edge Cases**:
    - Empty price data
    - Single data point
    - Exact price equals SMA value

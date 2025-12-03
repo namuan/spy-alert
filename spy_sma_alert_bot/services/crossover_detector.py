@@ -5,8 +5,8 @@ above or below Simple Moving Averages (SMAs) of various periods (25, 50, 75, 100
 It tracks previous states to prevent duplicate alerts for the same crossover event.
 """
 
-from typing import Dict, List, Literal
-from spy_sma_alert_bot.models import Crossover, CrossoverState
+from spy_sma_alert_bot.models import Crossover
+
 
 class CrossoverDetector:
     """Detects price crossovers above or below SMAs and manages crossover state.
@@ -19,22 +19,20 @@ class CrossoverDetector:
     @staticmethod
     def detect_crossovers(
         current_price: float,
-        previous_price: float,
-        smas: Dict[int, float],
-        previous_states: Dict[int, str]
-    ) -> List[Crossover]:
+        smas: dict[int, float],
+        previous_states: dict[int, str],
+    ) -> list[Crossover]:
         """Identifies crossovers between current and previous price/SMA states.
 
         Args:
             current_price: The current SPY price
-            previous_price: The previous SPY price
             smas: Dictionary of SMA periods to their current values
             previous_states: Dictionary of SMA periods to their previous position states
 
         Returns:
             List of Crossover objects representing detected crossover events
         """
-        crossovers: List[Crossover] = []
+        crossovers: list[Crossover] = []
 
         for sma_period, sma_value in smas.items():
             previous_state = previous_states.get(sma_period, "unknown")
@@ -54,31 +52,34 @@ class CrossoverDetector:
 
             if previous_state == "above" and current_position == "below":
                 # Price crossed below SMA
-                crossovers.append(Crossover(
-                    sma_period=sma_period,
-                    direction="below",
-                    price=current_price,
-                    sma_value=sma_value,
-                    timestamp=None  # Will be set by caller
-                ))
+                crossovers.append(
+                    Crossover(
+                        sma_period=sma_period,
+                        direction="below",
+                        price=current_price,
+                        sma_value=sma_value,
+                        timestamp=None,  # Will be set by caller
+                    )
+                )
             elif previous_state == "below" and current_position == "above":
                 # Price crossed above SMA
-                crossovers.append(Crossover(
-                    sma_period=sma_period,
-                    direction="above",
-                    price=current_price,
-                    sma_value=sma_value,
-                    timestamp=None  # Will be set by caller
-                ))
+                crossovers.append(
+                    Crossover(
+                        sma_period=sma_period,
+                        direction="above",
+                        price=current_price,
+                        sma_value=sma_value,
+                        timestamp=None,  # Will be set by caller
+                    )
+                )
             # If positions are the same, no crossover occurred
 
         return crossovers
 
     @staticmethod
     def update_crossover_state(
-        smas: Dict[int, float],
-        current_price: float
-    ) -> Dict[int, str]:
+        smas: dict[int, float], current_price: float
+    ) -> dict[int, str]:
         """Updates the tracking state for each SMA based on current price.
 
         Args:
@@ -88,7 +89,7 @@ class CrossoverDetector:
         Returns:
             Dictionary mapping SMA periods to their current position states
         """
-        new_states: Dict[int, str] = {}
+        new_states: dict[int, str] = {}
 
         for sma_period, sma_value in smas.items():
             if current_price > sma_value:

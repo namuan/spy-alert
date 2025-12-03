@@ -1,8 +1,10 @@
 """Configuration dataclass for the spy-alert bot."""
 
+from dataclasses import dataclass
 import os
 import re
-from dataclasses import dataclass
+from typing import Any
+
 
 @dataclass
 class BotConfig:
@@ -21,6 +23,7 @@ class BotConfig:
     sma_short_window: int = 10
     sma_long_window: int = 50
     debug: bool = False
+
 
 def validate_config(config: BotConfig) -> None:
     """Validate the BotConfig instance according to required rules.
@@ -47,12 +50,11 @@ def validate_config(config: BotConfig) -> None:
 
     if not config.chat_id:
         raise ValueError(
-            "Chat ID cannot be empty. "
-            "Please provide a valid Telegram chat ID."
+            "Chat ID cannot be empty. Please provide a valid Telegram chat ID."
         )
 
     # Validate Telegram token format
-    if not re.match(r'^\d+:[a-zA-Z0-9_-]{35}$', config.telegram_token):
+    if not re.match(r"^\d+:[a-zA-Z0-9_-]{35}$", config.telegram_token):
         raise ValueError(
             "Invalid Telegram token format. "
             "Expected format: 'digits:alphanumeric' (e.g., '123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11'). "
@@ -79,13 +81,17 @@ def validate_config(config: BotConfig) -> None:
         )
 
     # Validate SMA window relationship
-    if (config.sma_short_window is not None and config.sma_long_window is not None and
-        config.sma_short_window >= config.sma_long_window):
+    if (
+        config.sma_short_window is not None
+        and config.sma_long_window is not None
+        and config.sma_short_window >= config.sma_long_window
+    ):
         raise ValueError(
             f"SMA short window ({config.sma_short_window}) must be smaller than "
             f"SMA long window ({config.sma_long_window}). "
             "Please adjust the window sizes accordingly."
         )
+
 
 def load_config() -> BotConfig:
     """Load configuration from environment variables and return a BotConfig instance.
@@ -116,34 +122,46 @@ def load_config() -> BotConfig:
         try:
             monitoring_interval = int(monitoring_interval)
         except ValueError:
-            raise ValueError(f"Invalid MONITORING_INTERVAL value: {monitoring_interval}")
+            raise ValueError(
+                f"Invalid MONITORING_INTERVAL value: {monitoring_interval}"
+            ) from None
 
     sma_short_window = os.getenv("SMA_SHORT_WINDOW")
     if sma_short_window is not None:
         try:
             sma_short_window = int(sma_short_window)
         except ValueError:
-            raise ValueError(f"Invalid SMA_SHORT_WINDOW value: {sma_short_window}")
+            raise ValueError(
+                f"Invalid SMA_SHORT_WINDOW value: {sma_short_window}"
+            ) from None
 
     sma_long_window = os.getenv("SMA_LONG_WINDOW")
     if sma_long_window is not None:
         try:
             sma_long_window = int(sma_long_window)
         except ValueError:
-            raise ValueError(f"Invalid SMA_LONG_WINDOW value: {sma_long_window}")
+            raise ValueError(
+                f"Invalid SMA_LONG_WINDOW value: {sma_long_window}"
+            ) from None
 
     debug = os.getenv("DEBUG")
     if debug is not None:
-        debug = debug.lower() in ("true", "1", "t", "y", "yes")
+        debug = debug.lower() in {"true", "1", "t", "y", "yes"}
 
-    config = BotConfig(
-        telegram_token=telegram_token,
-        chat_id=chat_id,
-        monitoring_interval=monitoring_interval,
-        sma_short_window=sma_short_window,
-        sma_long_window=sma_long_window,
-        debug=debug,
-    )
+    config_args: dict[str, Any] = {
+        "telegram_token": telegram_token,
+        "chat_id": chat_id,
+    }
+    if monitoring_interval is not None:
+        config_args["monitoring_interval"] = monitoring_interval
+    if sma_short_window is not None:
+        config_args["sma_short_window"] = sma_short_window
+    if sma_long_window is not None:
+        config_args["sma_long_window"] = sma_long_window
+    if debug is not None:
+        config_args["debug"] = debug
+
+    config = BotConfig(**config_args)
 
     # Validate the configuration before returning
     validate_config(config)

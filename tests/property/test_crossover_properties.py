@@ -4,15 +4,13 @@ This module contains property-based tests for the CrossoverDetector class,
 verifying universal properties across many randomly generated inputs.
 """
 
-from typing import Dict, List
+from dataclasses import dataclass
 import math
-from datetime import datetime
 
 from hypothesis import given, settings, strategies as st
-import pytest
 
-from spy_sma_alert_bot.models import Crossover
 from spy_sma_alert_bot.services.crossover_detector import CrossoverDetector
+
 
 # Feature: spy-sma-alert-bot, Property 1: Upward crossover detection and notification
 @settings(max_examples=100, deadline=None)
@@ -20,13 +18,10 @@ from spy_sma_alert_bot.services.crossover_detector import CrossoverDetector
     sma_period=st.sampled_from([25, 50, 75, 100]),
     previous_price=st.floats(min_value=50.0, max_value=200.0),
     sma_value=st.floats(min_value=50.0, max_value=200.0),
-    price_increment=st.floats(min_value=0.1, max_value=20.0)
+    price_increment=st.floats(min_value=0.1, max_value=20.0),
 )
 def test_upward_crossover_detection(
-    sma_period: int,
-    previous_price: float,
-    sma_value: float,
-    price_increment: float
+    sma_period: int, previous_price: float, sma_value: float, price_increment: float
 ) -> None:
     """Property test for upward crossover detection and notification.
 
@@ -65,40 +60,39 @@ def test_upward_crossover_detection(
     crossover = crossovers[0]
 
     # Verify the crossover has the correct SMA period
-    assert crossover.sma_period == sma_period, (
-        f"Expected SMA period {sma_period}, got {crossover.sma_period}"
-    )
+    assert (
+        crossover.sma_period == sma_period
+    ), f"Expected SMA period {sma_period}, got {crossover.sma_period}"
 
     # Verify the crossover has direction="above"
-    assert crossover.direction == "above", (
-        f"Expected direction 'above', got '{crossover.direction}'"
-    )
+    assert (
+        crossover.direction == "above"
+    ), f"Expected direction 'above', got '{crossover.direction}'"
 
     # Verify the crossover contains the correct price
-    assert math.isclose(crossover.price, current_price, rel_tol=1e-9), (
-        f"Expected price {current_price}, got {crossover.price}"
-    )
+    assert math.isclose(
+        crossover.price, current_price, rel_tol=1e-9
+    ), f"Expected price {current_price}, got {crossover.price}"
 
     # Verify the crossover contains the correct SMA value
-    assert math.isclose(crossover.sma_value, sma_value, rel_tol=1e-9), (
-        f"Expected SMA value {sma_value}, got {crossover.sma_value}"
-    )
+    assert math.isclose(
+        crossover.sma_value, sma_value, rel_tol=1e-9
+    ), f"Expected SMA value {sma_value}, got {crossover.sma_value}"
 
     # Verify the timestamp is None (as per detector implementation)
-    assert crossover.timestamp is None, (
-        f"Expected timestamp to be None, got {crossover.timestamp}"
-    )
+    assert (
+        crossover.timestamp is None
+    ), f"Expected timestamp to be None, got {crossover.timestamp}"
+
 
 @settings(max_examples=50, deadline=None)
 @given(
     sma_period=st.sampled_from([25, 50, 75, 100]),
     price=st.floats(min_value=50.0, max_value=200.0),
-    sma_value=st.floats(min_value=50.0, max_value=200.0)
+    sma_value=st.floats(min_value=50.0, max_value=200.0),
 )
 def test_upward_crossover_edge_cases(
-    sma_period: int,
-    price: float,
-    sma_value: float
+    sma_period: int, price: float, sma_value: float
 ) -> None:
     """Test edge cases for upward crossover detection."""
     # Test case 1: Price exactly equals SMA (should not trigger crossover)
@@ -119,7 +113,9 @@ def test_upward_crossover_edge_cases(
         price, price - 1.0, smas, previous_states
     )
 
-    assert len(crossovers) == 0, "Should not detect crossover with unknown previous state"
+    assert (
+        len(crossovers) == 0
+    ), "Should not detect crossover with unknown previous state"
 
     # Test case 3: No crossover when price stays below SMA
     previous_states = {sma_period: "below"}
@@ -127,7 +123,10 @@ def test_upward_crossover_edge_cases(
         sma_value - 0.1, sma_value - 0.2, smas, previous_states
     )
 
-    assert len(crossovers) == 0, "Should not detect crossover when price stays below SMA"
+    assert (
+        len(crossovers) == 0
+    ), "Should not detect crossover when price stays below SMA"
+
 
 # Feature: spy-sma-alert-bot, Property 2: Downward crossover detection and notification
 @settings(max_examples=100, deadline=None)
@@ -135,13 +134,10 @@ def test_upward_crossover_edge_cases(
     sma_period=st.sampled_from([25, 50, 75, 100]),
     previous_price=st.floats(min_value=50.0, max_value=200.0),
     sma_value=st.floats(min_value=50.0, max_value=200.0),
-    price_decrement=st.floats(min_value=0.1, max_value=20.0)
+    price_decrement=st.floats(min_value=0.1, max_value=20.0),
 )
 def test_downward_crossover_detection(
-    sma_period: int,
-    previous_price: float,
-    sma_value: float,
-    price_decrement: float
+    sma_period: int, previous_price: float, sma_value: float, price_decrement: float
 ) -> None:
     """Property test for downward crossover detection and notification.
 
@@ -180,40 +176,39 @@ def test_downward_crossover_detection(
     crossover = crossovers[0]
 
     # Verify the crossover has the correct SMA period
-    assert crossover.sma_period == sma_period, (
-        f"Expected SMA period {sma_period}, got {crossover.sma_period}"
-    )
+    assert (
+        crossover.sma_period == sma_period
+    ), f"Expected SMA period {sma_period}, got {crossover.sma_period}"
 
     # Verify the crossover has direction="below"
-    assert crossover.direction == "below", (
-        f"Expected direction 'below', got '{crossover.direction}'"
-    )
+    assert (
+        crossover.direction == "below"
+    ), f"Expected direction 'below', got '{crossover.direction}'"
 
     # Verify the crossover contains the correct price
-    assert math.isclose(crossover.price, current_price, rel_tol=1e-9), (
-        f"Expected price {current_price}, got {crossover.price}"
-    )
+    assert math.isclose(
+        crossover.price, current_price, rel_tol=1e-9
+    ), f"Expected price {current_price}, got {crossover.price}"
 
     # Verify the crossover contains the correct SMA value
-    assert math.isclose(crossover.sma_value, sma_value, rel_tol=1e-9), (
-        f"Expected SMA value {sma_value}, got {crossover.sma_value}"
-    )
+    assert math.isclose(
+        crossover.sma_value, sma_value, rel_tol=1e-9
+    ), f"Expected SMA value {sma_value}, got {crossover.sma_value}"
 
     # Verify the timestamp is None (as per detector implementation)
-    assert crossover.timestamp is None, (
-        f"Expected timestamp to be None, got {crossover.timestamp}"
-    )
+    assert (
+        crossover.timestamp is None
+    ), f"Expected timestamp to be None, got {crossover.timestamp}"
+
 
 @settings(max_examples=50, deadline=None)
 @given(
     sma_period=st.sampled_from([25, 50, 75, 100]),
     price=st.floats(min_value=50.0, max_value=200.0),
-    sma_value=st.floats(min_value=50.0, max_value=200.0)
+    sma_value=st.floats(min_value=50.0, max_value=200.0),
 )
 def test_downward_crossover_edge_cases(
-    sma_period: int,
-    price: float,
-    sma_value: float
+    sma_period: int, price: float, sma_value: float
 ) -> None:
     """Test edge cases for downward crossover detection."""
     # Test case 1: Price exactly equals SMA (should not trigger crossover)
@@ -234,7 +229,9 @@ def test_downward_crossover_edge_cases(
         price, price + 1.0, smas, previous_states
     )
 
-    assert len(crossovers) == 0, "Should not detect crossover with unknown previous state"
+    assert (
+        len(crossovers) == 0
+    ), "Should not detect crossover with unknown previous state"
 
     # Test case 3: No crossover when price stays above SMA
     previous_states = {sma_period: "above"}
@@ -242,7 +239,10 @@ def test_downward_crossover_edge_cases(
         sma_value + 0.1, sma_value + 0.2, smas, previous_states
     )
 
-    assert len(crossovers) == 0, "Should not detect crossover when price stays above SMA"
+    assert (
+        len(crossovers) == 0
+    ), "Should not detect crossover when price stays above SMA"
+
 
 # Feature: spy-sma-alert-bot, Property 11: Crossover detection accuracy
 @settings(max_examples=100, deadline=None)
@@ -251,14 +251,14 @@ def test_downward_crossover_edge_cases(
     previous_price=st.floats(min_value=50.0, max_value=200.0),
     sma_value=st.floats(min_value=50.0, max_value=200.0),
     price_movement=st.floats(min_value=-20.0, max_value=20.0),
-    previous_state=st.sampled_from(["above", "below", "unknown"])
+    previous_state=st.sampled_from(["above", "below", "unknown"]),
 )
 def test_crossover_detection_accuracy(
     sma_period: int,
     previous_price: float,
     sma_value: float,
     price_movement: float,
-    previous_state: str
+    previous_state: str,
 ) -> None:
     """Property test for crossover detection accuracy.
 
@@ -276,14 +276,10 @@ def test_crossover_detection_accuracy(
 
     # Set previous state - this should match the actual previous position
     # to create valid test scenarios
-    if previous_state == "above":
-        # Ensure previous price is actually above SMA
-        if previous_price <= sma_value:
-            previous_price = sma_value + abs(price_movement) + 0.1
-    elif previous_state == "below":
-        # Ensure previous price is actually below SMA
-        if previous_price >= sma_value:
-            previous_price = sma_value - abs(price_movement) - 0.1
+    if previous_state == "above" and previous_price <= sma_value:
+        previous_price = sma_value + abs(price_movement) + 0.1
+    elif previous_state == "below" and previous_price >= sma_value:
+        previous_price = sma_value - abs(price_movement) - 0.1
 
     # Recalculate current price after adjusting previous price
     current_price = previous_price + price_movement
@@ -296,108 +292,70 @@ def test_crossover_detection_accuracy(
         current_price, previous_price, smas, previous_states
     )
 
-    # Determine current position
-    if current_price > sma_value:
-        current_position = "above"
-    elif current_price < sma_value:
-        current_position = "below"
-    else:
-        current_position = "unknown"
+    def determine_position(price: float, sma: float) -> str:
+        if price > sma:
+            return "above"
+        if price < sma:
+            return "below"
+        return "unknown"
 
-    # Check for price equal to SMA (no crossover)
+    def expected_crossover(
+        prev: str, curr: str, equal: bool
+    ) -> tuple[bool, str | None]:
+        if prev == "unknown" or equal or prev == curr:
+            return False, None
+        if curr in {prev, "unknown"}:
+            return False, None
+        direction = "above" if prev == "below" and curr == "above" else "below"
+        return True, direction
+
+    current_position = determine_position(current_price, sma_value)
     price_equals_sma = math.isclose(current_price, sma_value, rel_tol=1e-9)
+    should, direction = expected_crossover(
+        previous_state, current_position, price_equals_sma
+    )
 
-    # Verify crossover detection accuracy
-    if previous_state == "unknown":
-        # No crossover should be detected when previous state is unknown
-        assert len(crossovers) == 0, (
-            f"No crossover should be detected when previous state is unknown. "
-            f"Previous state: {previous_state}, Current position: {current_position}, "
-            f"Crossovers: {len(crossovers)}"
-        )
-    elif price_equals_sma:
-        # No crossover should be detected when price equals SMA
-        assert len(crossovers) == 0, (
-            f"No crossover should be detected when price equals SMA. "
-            f"Previous state: {previous_state}, Previous price: {previous_price}, "
-            f"Current price: {current_price}, SMA: {sma_value}, Crossovers: {len(crossovers)}"
-        )
-    elif previous_state == current_position:
-        # No crossover should be detected when price stays on the same side
-        assert len(crossovers) == 0, (
-            f"No crossover should be detected when price stays on the same side. "
-            f"Previous state: {previous_state}, Current position: {current_position}, "
-            f"Crossovers: {len(crossovers)}"
-        )
-    elif previous_state != current_position and current_position != "unknown":
-        # Crossover should be detected when price position changes
-        assert len(crossovers) == 1, (
-            f"Exactly one crossover should be detected when price position changes. "
-            f"Previous state: {previous_state}, Current position: {current_position}, "
-            f"Crossovers: {len(crossovers)}"
-        )
+    if not should:
+        assert len(crossovers) == 0
+        return
 
-        # Verify the detected crossover
-        crossover = crossovers[0]
+    assert len(crossovers) == 1
+    crossover = crossovers[0]
+    assert crossover.sma_period == sma_period
+    assert crossover.direction == direction
+    assert math.isclose(crossover.price, current_price, rel_tol=1e-9)
+    assert math.isclose(crossover.sma_value, sma_value, rel_tol=1e-9)
+    assert crossover.timestamp is None
 
-        # Verify the crossover has the correct SMA period
-        assert crossover.sma_period == sma_period, (
-            f"Expected SMA period {sma_period}, got {crossover.sma_period}"
-        )
 
-        # Verify the correct crossover direction is detected
-        if previous_state == "below" and current_position == "above":
-            assert crossover.direction == "above", (
-                f"Expected direction 'above' for upward crossover, got '{crossover.direction}'"
-            )
-        elif previous_state == "above" and current_position == "below":
-            assert crossover.direction == "below", (
-                f"Expected direction 'below' for downward crossover, got '{crossover.direction}'"
-            )
+@dataclass(frozen=True)
+class DuplicateAlertCase:
+    sma_period: int
+    sma_value: float
+    first_direction: str
+    num_duplicates: int
+    cross_back: bool
+    initial_distance: float
+    noise: float
+    cross_delta: float
 
-        # Verify the crossover contains the correct price
-        assert math.isclose(crossover.price, current_price, rel_tol=1e-9), (
-            f"Expected price {current_price}, got {crossover.price}"
-        )
 
-        # Verify the crossover contains the correct SMA value
-        assert math.isclose(crossover.sma_value, sma_value, rel_tol=1e-9), (
-            f"Expected SMA value {sma_value}, got {crossover.sma_value}"
-        )
-
-        # Verify the timestamp is None (as per detector implementation)
-        assert crossover.timestamp is None, (
-            f"Expected timestamp to be None, got {crossover.timestamp}"
-        )
-    else:
-        # No crossover should be detected in other cases
-        assert len(crossovers) == 0, (
-            f"No crossover should be detected in this scenario. "
-            f"Previous state: {previous_state}, Current position: {current_position}, "
-            f"Crossovers: {len(crossovers)}"
-        )
 # Feature: spy-sma-alert-bot, Property 10: Duplicate alert prevention (idempotence)
 @settings(max_examples=100, deadline=None)
 @given(
-    sma_period=st.sampled_from([25, 50, 75, 100]),
-    sma_value=st.floats(min_value=50.0, max_value=200.0),
-    first_direction=st.sampled_from(["above", "below"]),
-    num_duplicates=st.integers(min_value=1, max_value=5),
-    cross_back=st.booleans(),
-    initial_distance=st.floats(min_value=0.01, max_value=10.0),
-    noise=st.floats(min_value=-0.3, max_value=0.3),
-    cross_delta=st.floats(min_value=0.01, max_value=10.0),
+    case=st.builds(
+        DuplicateAlertCase,
+        sma_period=st.sampled_from([25, 50, 75, 100]),
+        sma_value=st.floats(min_value=50.0, max_value=200.0),
+        first_direction=st.sampled_from(["above", "below"]),
+        num_duplicates=st.integers(min_value=1, max_value=5),
+        cross_back=st.booleans(),
+        initial_distance=st.floats(min_value=0.01, max_value=10.0),
+        noise=st.floats(min_value=-0.3, max_value=0.3),
+        cross_delta=st.floats(min_value=0.01, max_value=10.0),
+    )
 )
-def test_duplicate_alert_prevention(
-    sma_period: int,
-    sma_value: float,
-    first_direction: str,
-    num_duplicates: int,
-    cross_back: bool,
-    initial_distance: float,
-    noise: float,
-    cross_delta: float,
-) -> None:
+def test_duplicate_alert_prevention(case: DuplicateAlertCase) -> None:
     """Property test for duplicate alert prevention (idempotence).
 
     For any crossover event, detecting the same crossover multiple times without an
@@ -408,18 +366,20 @@ def test_duplicate_alert_prevention(
 
     Validates: Requirement 4.2
     """
-    smas: Dict[int, float] = {sma_period: sma_value}
+    smas: dict[int, float] = {case.sma_period: case.sma_value}
 
     # Initial previous state opposite to create first crossover
-    initial_previous_state: str = "below" if first_direction == "above" else "above"
-    previous_states: Dict[int, str] = {sma_period: initial_previous_state}
+    initial_previous_state: str = (
+        "below" if case.first_direction == "above" else "above"
+    )
+    previous_states: dict[int, str] = {case.sma_period: initial_previous_state}
 
     # Arbitrary initial previous price (not used in detection logic)
-    previous_price: float = sma_value
+    previous_price: float = case.sma_value
 
     # First crossover price
-    sign: int = 1 if first_direction == "above" else -1
-    current_price: float = sma_value + sign * initial_distance
+    sign: int = 1 if case.first_direction == "above" else -1
+    current_price: float = case.sma_value + sign * case.initial_distance
 
     # First detection: expect exactly one crossover
     crossovers = CrossoverDetector.detect_crossovers(
@@ -427,10 +387,10 @@ def test_duplicate_alert_prevention(
     )
     assert len(crossovers) == 1, f"Expected 1 crossover, got {len(crossovers)}"
     crossover = crossovers[0]
-    assert crossover.sma_period == sma_period
-    assert crossover.direction == first_direction
+    assert crossover.sma_period == case.sma_period
+    assert crossover.direction == case.first_direction
     assert math.isclose(crossover.price, current_price, rel_tol=1e-9)
-    assert math.isclose(crossover.sma_value, sma_value, rel_tol=1e-9)
+    assert math.isclose(crossover.sma_value, case.sma_value, rel_tol=1e-9)
     assert crossover.timestamp is None
 
     # Update states after first detection
@@ -438,14 +398,14 @@ def test_duplicate_alert_prevention(
     previous_price = current_price
 
     # Multiple duplicate detections with noise (same side)
-    current_position = first_direction  # "above" or "below"
-    for _ in range(num_duplicates):
-        detect_price = current_price + noise
+    current_position = case.first_direction
+    for _ in range(case.num_duplicates):
+        detect_price = current_price + case.noise
         # Clamp to ensure same side (no accidental crossover)
         if current_position == "above":
-            detect_price = max(sma_value + 0.001, detect_price)
+            detect_price = max(case.sma_value + 0.001, detect_price)
         else:  # below
-            detect_price = min(sma_value - 0.001, detect_price)
+            detect_price = min(case.sma_value - 0.001, detect_price)
 
         # Should not detect duplicate crossover
         crossovers = CrossoverDetector.detect_crossovers(
@@ -459,10 +419,10 @@ def test_duplicate_alert_prevention(
         current_price = detect_price
 
     # Test cross back to opposite side if requested
-    if cross_back:
+    if case.cross_back:
         new_sign = -sign
-        new_direction = "below" if first_direction == "above" else "above"
-        cross_price = sma_value + new_sign * cross_delta
+        new_direction = "below" if case.first_direction == "above" else "above"
+        cross_price = case.sma_value + new_sign * case.cross_delta
 
         # Should detect new crossover
         crossovers = CrossoverDetector.detect_crossovers(
@@ -470,8 +430,8 @@ def test_duplicate_alert_prevention(
         )
         assert len(crossovers) == 1, f"Expected 1 new crossover, got {len(crossovers)}"
         crossover = crossovers[0]
-        assert crossover.sma_period == sma_period
+        assert crossover.sma_period == case.sma_period
         assert crossover.direction == new_direction
         assert math.isclose(crossover.price, cross_price, rel_tol=1e-9)
-        assert math.isclose(crossover.sma_value, sma_value, rel_tol=1e-9)
+        assert math.isclose(crossover.sma_value, case.sma_value, rel_tol=1e-9)
         assert crossover.timestamp is None

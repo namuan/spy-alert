@@ -9,6 +9,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Literal
 
+
 @dataclass
 class PricePoint:
     """Represents a single price point with timestamp and closing price.
@@ -17,8 +18,10 @@ class PricePoint:
         timestamp: The datetime when this price point was recorded
         close: The closing price at the given timestamp
     """
+
     timestamp: datetime
     close: float
+
 
 @dataclass
 class Crossover:
@@ -34,11 +37,13 @@ class Crossover:
         sma_value: The value of the SMA at the time of crossover
         timestamp: The datetime when the crossover occurred
     """
+
     sma_period: int
     direction: Literal["above", "below"]
     price: float
     sma_value: float
     timestamp: datetime
+
 
 @dataclass
 class CrossoverState:
@@ -52,5 +57,6 @@ class CrossoverState:
         position: The current position of price relative to SMA
                  ("above", "below", or "unknown")
     """
+
     sma_period: int
     position: Literal["above", "below", "unknown"]

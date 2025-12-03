@@ -4,19 +4,23 @@ This module provides the PriceDataService class which handles fetching and valid
 SPY price data from yfinance, with caching and error handling capabilities.
 """
 
-import time
+from collections.abc import Iterator
 from datetime import datetime, timedelta
-from typing import List, Optional, Tuple
+import time
+from typing import Protocol, SupportsFloat
 
+from pydantic import BaseModel
 import yfinance as yf
-from pydantic import BaseModel, ValidationError
 
 from spy_sma_alert_bot.models import PricePoint
 
+
 class CachedData(BaseModel):
     """Model for caching price data with timestamp."""
-    data: List[PricePoint]
+
+    data: list[PricePoint]
     timestamp: datetime
+
 
 class PriceDataService:
     """Service for fetching and validating SPY price data.
@@ -32,7 +36,7 @@ class PriceDataService:
         _max_delay: Maximum delay in seconds for exponential backoff
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the PriceDataService with default settings."""
         self._cache: dict[int, CachedData] = {}  # Key: days, Value: CachedData
         self._cache_duration = timedelta(minutes=5)  # 5-minute cache
@@ -61,19 +65,15 @@ class PriceDataService:
 
             except (ValueError, IndexError, KeyError) as e:
                 if attempt == self._max_retries - 1:
-                    raise RuntimeError(f"Failed to fetch current price after {self._max_retries} attempts: {e}")
-                delay = min(self._initial_delay * (2 ** attempt), self._max_delay)
-                time.sleep(delay)
-
-            except Exception as e:
-                if attempt == self._max_retries - 1:
-                    raise RuntimeError(f"Unexpected error fetching current price after {self._max_retries} attempts: {e}")
-                delay = min(self._initial_delay * (2 ** attempt), self._max_delay)
+                    raise RuntimeError(
+                        f"Failed to fetch current price after {self._max_retries} attempts: {e}"
+                    ) from e
+                delay = min(self._initial_delay * (2**attempt), self._max_delay)
                 time.sleep(delay)
 
         raise RuntimeError("Failed to fetch current price due to unknown error")
 
-    def fetch_historical_prices(self, days: int) -> List[PricePoint]:
+    def fetch_historical_prices(self, days: int) -> list[PricePoint]:
         """Fetch historical SPY prices for the specified number of days.
 
         Args:
@@ -95,70 +95,71 @@ class PriceDataService:
             if datetime.now() - cached.timestamp < self._cache_duration:
                 return cached.data
 
-        # If not in cache or cache expired, fetch fresh data
         for attempt in range(self._max_retries):
             try:
                 spy = yf.Ticker("SPY")
-                # Fetch extra days to account for weekends/holidays
                 extra_days = max(20, int(days * 0.2))
-                data = spy.history(period=f"{days + extra_days}d")
-
-                if data.empty:
-                    raise ValueError("No historical data available")
-
-                # Convert to PricePoint objects
-                price_points = []
-                for timestamp, row in data.iterrows():
-                    if "Close" in row:
-                        price_points.append(PricePoint(
-                            timestamp=timestamp.to_pydatetime(),
-                            close=float(row["Close"])
-                        ))
-
-                # Ensure we have enough data points
-                if len(price_points) < days:
-                    # Try to fetch more data if we don't have enough
-                    additional_days = days - len(price_points) + extra_days
-                    if additional_days > 0:
-                        more_data = spy.history(period=f"{additional_days}d")
-                        for timestamp, row in more_data.iterrows():
-                            if "Close" in row:
-                                price_points.append(PricePoint(
-                                    timestamp=timestamp.to_pydatetime(),
-                                    close=float(row["Close"])
-                                ))
-
-                # Sort by timestamp (oldest first) and take the most recent 'days' points
+                price_points = self._fetch_price_points(spy, days, extra_days)
                 price_points.sort(key=lambda x: x.timestamp)
                 price_points = price_points[-days:]
 
-                # Validate the data
                 if not self.validate_price_data(price_points):
                     raise ValueError("Invalid price data received")
 
-                # Cache the result
                 self._cache[days] = CachedData(
-                    data=price_points,
-                    timestamp=datetime.now()
+                    data=price_points, timestamp=datetime.now()
                 )
-
                 return price_points
 
             except (ValueError, IndexError, KeyError) as e:
                 if attempt == self._max_retries - 1:
-                    raise RuntimeError(f"Failed to fetch historical prices after {self._max_retries} attempts: {e}")
-                delay = min(self._initial_delay * (2 ** attempt), self._max_delay)
-                time.sleep(delay)
-
-            except Exception as e:
-                if attempt == self._max_retries - 1:
-                    raise RuntimeError(f"Unexpected error fetching historical prices after {self._max_retries} attempts: {e}")
-                delay = min(self._initial_delay * (2 ** attempt), self._max_delay)
+                    raise RuntimeError(
+                        f"Failed to fetch historical prices after {self._max_retries} attempts: {e}"
+                    ) from e
+                delay = min(self._initial_delay * (2**attempt), self._max_delay)
                 time.sleep(delay)
 
         raise RuntimeError("Failed to fetch historical prices due to unknown error")
 
-    def validate_price_data(self, data: List[PricePoint]) -> bool:
+    @staticmethod
+    def _collect_points_from_history(data: "HistoryLike") -> list[PricePoint]:
+        return [
+            PricePoint(
+                timestamp=(ts.to_pydatetime() if hasattr(ts, "to_pydatetime") else ts),
+                close=float(row["Close"]),
+            )
+            for ts, row in data.iterrows()
+            if "Close" in row
+        ]
+
+    def _fetch_price_points(
+        self, spy: yf.Ticker, days: int, extra_days: int
+    ) -> list[PricePoint]:
+        data = spy.history(period=f"{days + extra_days}d")
+        if data.empty:
+            raise ValueError("No historical data available")
+
+        price_points = self._collect_points_from_history(data)
+
+        if len(price_points) < days:
+            additional_days = days - len(price_points) + extra_days
+            if additional_days > 0:
+                more_data = spy.history(period=f"{additional_days}d")
+                price_points.extend(self._collect_points_from_history(more_data))
+
+        return price_points
+
+
+class RowLike(Protocol):
+    def __contains__(self, __key: str) -> bool: ...
+    def __getitem__(self, __key: str) -> SupportsFloat: ...
+
+
+class HistoryLike(Protocol):
+    def iterrows(self) -> Iterator[tuple[object, RowLike]]: ...
+
+    @staticmethod
+    def validate_price_data(data: list[PricePoint]) -> bool:
         """Validate price data for completeness and correctness.
 
         Args:

@@ -100,7 +100,7 @@
   - **Property 21: Chart legend presence**
   - **Validates: Requirements 7.4**
 
-- [ ] 8. Implement user subscription manager
+- [x] 8. Implement user subscription manager
   - Create UserSubscriptionManager class
   - Implement subscribe_user(chat_id) method
   - Implement unsubscribe_user(chat_id) method
@@ -109,11 +109,11 @@
   - Use thread-safe data structure (set with lock or asyncio-safe structure)
   - _Requirements: 2.1, 2.2_
 
-- [ ]* 8.1 Write property test for user subscription registration
+- [x]* 8.1 Write property test for user subscription registration
   - **Property 3: User subscription registration**
   - **Validates: Requirements 2.1**
 
-- [ ]* 8.2 Write property test for user subscription cancellation
+- [x]* 8.2 Write property test for user subscription cancellation
   - **Property 4: User subscription cancellation**
   - **Validates: Requirements 2.2**
 

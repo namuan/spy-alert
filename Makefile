@@ -10,13 +10,29 @@ install: ## Install the virtual environment and install the pre-commit hooks
 check: ## Run code quality tools.
 	@echo "🚀 Checking lock file consistency with 'pyproject.toml'"
 	@uv lock --locked
+	@echo "🚀 Formatting code with ruff"
+	@uv run ruff format .
+	@echo "🚀 Linting with unsafe fixes"
+	@uv run ruff check . --fix --unsafe-fixes
 	@echo "🚀 Running ruff check"
 	@uv run ruff check .
-	@echo "🚀 Running basedpyright strict"
+	@echo "🚀 Type checking with basedpyright"
 	@uv run basedpyright --level error
+	@echo "🚀 Checking complexity"
+	@uv run radon cc . -a -nb
+	@echo "🚀 Checking quality metrics"
+	@uv run skylos . --quality --danger
 	@echo "🚀 Linting code: Running pre-commit"
 	@uv run pre-commit run -a
 	@mob next
+
+metrics: ## Check code quality: dead code, complexity, and maintainability (poe metrics equivalent)
+	@echo "🚀 Checking code quality metrics"
+	@uv run skylos . --quality
+	@echo "🚀 Checking cyclomatic complexity"
+	@uv run radon cc . -a -nb
+	@echo "🚀 Checking maintainability index"
+	@uv run radon mi . -nb
 
 check-tool: ## Manually run a single pre-commit hook
 	@echo "🚀 Running pre-commit hook: $(TOOL)"

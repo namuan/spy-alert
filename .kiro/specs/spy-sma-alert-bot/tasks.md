@@ -149,18 +149,18 @@
   - **Property 22: Chart inclusion in status response**
   - **Validates: Requirements 7.5**
 
-- [ ] 11. Implement alert dispatcher
+- [x] 11. Implement alert dispatcher
   - Create AlertDispatcher class
   - Implement send_alert() method to send messages with chart images to users
   - Implement send_alert_to_all_subscribers() to broadcast to all subscribed users
   - Add error handling for failed message sends (log and continue)
   - _Requirements: 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 6.2, 7.1_
 
-- [ ]* 11.1 Write property test for chart image inclusion in crossover alerts
+- [x]* 11.1 Write property test for chart image inclusion in crossover alerts
   - **Property 18: Chart image inclusion in crossover alerts**
   - **Validates: Requirements 7.1**
 
-- [ ]* 11.2 Write property test for Telegram API error resilience
+- [x]* 11.2 Write property test for Telegram API error resilience
   - **Property 15: Telegram API error resilience**
   - **Validates: Requirements 6.2**
 

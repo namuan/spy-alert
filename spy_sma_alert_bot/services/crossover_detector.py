@@ -19,25 +19,40 @@ class CrossoverDetector:
     @staticmethod
     def detect_crossovers(
         current_price: float,
-        smas: dict[int, float],
-        previous_states: dict[int, str],
+        previous_or_smas: float | dict[int, float],
+        smas: dict[int, float] | None = None,
+        previous_states: dict[int, str] | None = None,
     ) -> list[Crossover]:
         """Identifies crossovers between current and previous price/SMA states.
 
-        Args:
-            current_price: The current SPY price
-            smas: Dictionary of SMA periods to their current values
-            previous_states: Dictionary of SMA periods to their previous position states
-
-        Returns:
-            List of Crossover objects representing detected crossover events
+        Supports two calling conventions:
+        - detect_crossovers(current_price, smas, previous_states)
+        - detect_crossovers(current_price, previous_price, smas, previous_states)
         """
+        if isinstance(previous_or_smas, dict):
+            prev_price = None
+            smas_dict = previous_or_smas
+            prev_states = smas if isinstance(smas, dict) else {}
+        else:
+            prev_price = float(previous_or_smas)
+            smas_dict = smas or {}
+            prev_states = previous_states or {}
+
         crossovers: list[Crossover] = []
 
-        for sma_period, sma_value in smas.items():
-            previous_state = previous_states.get(sma_period, "unknown")
+        for sma_period, sma_value in smas_dict.items():
+            if isinstance(prev_states, dict) and sma_period in prev_states:
+                previous_state = prev_states[sma_period]
+            elif prev_price is not None:
+                if prev_price > sma_value:
+                    previous_state = "above"
+                elif prev_price < sma_value:
+                    previous_state = "below"
+                else:
+                    previous_state = "unknown"
+            else:
+                previous_state = "unknown"
 
-            # Determine current position
             if current_price > sma_value:
                 current_position = "above"
             elif current_price < sma_value:
@@ -45,34 +60,29 @@ class CrossoverDetector:
             else:
                 current_position = "unknown"
 
-            # Check for crossover events
-            if previous_state == "unknown":
-                # No previous state, cannot determine crossover
+            if previous_state == "unknown" or current_position == "unknown":
                 continue
 
             if previous_state == "above" and current_position == "below":
-                # Price crossed below SMA
                 crossovers.append(
                     Crossover(
                         sma_period=sma_period,
                         direction="below",
                         price=current_price,
                         sma_value=sma_value,
-                        timestamp=None,  # Will be set by caller
+                        timestamp=None,
                     )
                 )
             elif previous_state == "below" and current_position == "above":
-                # Price crossed above SMA
                 crossovers.append(
                     Crossover(
                         sma_period=sma_period,
                         direction="above",
                         price=current_price,
                         sma_value=sma_value,
-                        timestamp=None,  # Will be set by caller
+                        timestamp=None,
                     )
                 )
-            # If positions are the same, no crossover occurred
 
         return crossovers
 

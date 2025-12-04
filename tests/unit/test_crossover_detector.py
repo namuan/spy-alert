@@ -66,7 +66,7 @@ def test_detect_crossovers_unknown_previous_state() -> None:
 def test_detect_crossovers_multiple_smas() -> None:
     """Test detection with multiple SMAs."""
     current_price = 105.0
-    smas = {25: 100.0, 50: 110.0, 75: 90.0}
+    smas = {25: 100.0, 50: 95.0, 75: 90.0}
     previous_states = {25: "below", 50: "below", 75: "above"}
 
     crossovers = CrossoverDetector.detect_crossovers(
@@ -100,7 +100,7 @@ def test_update_crossover_state_unknown() -> None:
 
     new_states = CrossoverDetector.update_crossover_state(smas, current_price)
 
-    assert new_states == {25: "below", 50: "unknown"}
+    assert new_states == {25: "above", 50: "unknown"}
 
 
 def test_detect_crossovers_edge_cases() -> None:

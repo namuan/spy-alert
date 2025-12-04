@@ -164,6 +164,8 @@ class PriceDataService:
         for point in data:
             if point.timestamp is None or point.timestamp > now:
                 return False
+            if point.close is None:
+                return False
             if point.close <= 0:
                 return False
             if point.close != point.close:

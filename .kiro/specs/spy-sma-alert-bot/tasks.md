@@ -201,15 +201,9 @@
 - [x] 14. Checkpoint - Ensure all tests pass
   - Ensure all tests pass, ask the user if questions arise.
 
-- [ ]* 15. Create integration tests
-  - Write end-to-end test simulating full crossover detection and alert flow
-  - Test bot startup with various configuration scenarios
-  - Test complete user journey (subscribe, receive alert, check status, unsubscribe)
-  - _Requirements: All_
-
-- [ ] 16. Create documentation
+- [x] 15. Create documentation
   - Write README.md with setup instructions
   - Document environment variables in .env.example
   - Add usage examples for bot commands
-  - Document deployment options
+  - Document self deployment options on DigitalOcean, Raspberry PI or Vultr.
   - _Requirements: 8.1, 8.2, 8.3_

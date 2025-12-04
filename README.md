@@ -71,7 +71,8 @@ spy_sma_alert_bot/
    ```ini
    TELEGRAM_TOKEN=your_bot_token
    TELEGRAM_CHAT_ID=your_chat_id
-   MONITORING_INTERVAL_MINUTES=5  # Optional
+   MONITORING_INTERVAL=5
+   DEBUG=false
    ```
 
 ## Usage
@@ -80,8 +81,6 @@ spy_sma_alert_bot/
 
 ```bash
 make run
-# or
-uv run python -m spy_sma_alert_bot.main
 ```
 
 ### Telegram Commands
@@ -89,6 +88,12 @@ uv run python -m spy_sma_alert_bot.main
 - `/start` - Subscribe to alerts
 - `/stop` - Unsubscribe from alerts
 - `/status` - Get current price, SMA values, and chart
+
+#### Examples
+
+```text
+Status: Subscribed; Current SPY Price: $432.10; SMA 25: $428.75; SMA 50: $421.40; SMA 75: $415.20; SMA 100: $410.85
+```
 
 ### Alert Types
 
@@ -146,6 +151,39 @@ uv run poe quality
 ```
 
 ## Deployment
+
+### DigitalOcean / Vultr (Ubuntu)
+
+- Create a Droplet/Instance with Ubuntu 22.04+
+- Install system packages: `sudo apt update && sudo apt install -y git python3 python3-venv make`
+- Clone repo and setup: `git clone <repo> && cd spy-alert && make install`
+- Configure environment: `cp .env.example .env` and edit values
+- Create a systemd service at `/etc/systemd/system/spy-alert.service`:
+
+```ini
+[Unit]
+Description=SPY SMA Alert Bot
+After=network.target
+
+[Service]
+WorkingDirectory=/opt/spy-alert
+EnvironmentFile=/opt/spy-alert/.env
+ExecStart=/bin/bash -lc 'cd /opt/spy-alert && make run'
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+```
+
+- Move project to `/opt/spy-alert`: `sudo mv ~/spy-alert /opt/spy-alert`
+- Enable and start: `sudo systemctl daemon-reload && sudo systemctl enable --now spy-alert`
+
+### Raspberry Pi (Bullseye/Bookworm)
+
+- Install packages: `sudo apt update && sudo apt install -y git python3 python3-venv python3-pip libatlas-base-dev make`
+- Clone and setup: `git clone <repo> && cd spy-alert && make install`
+- Configure `.env` and use the same systemd unit as above (adjust paths)
+- Check logs: `journalctl -u spy-alert -f`
 
 ### Packaging
 

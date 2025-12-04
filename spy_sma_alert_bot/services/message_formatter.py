@@ -20,12 +20,16 @@ class MessageFormatter:
 
     @staticmethod
     def format_status_message(
+        *,
         subscribed: bool,
         current_price: float,
         smas: dict[int, float | None],
     ) -> str:
         status = "Subscribed" if subscribed else "Unsubscribed"
-        parts: list[str] = [f"Status: {status}", f"Current SPY Price: ${current_price:.2f}"]
+        parts: list[str] = [
+            f"Status: {status}",
+            f"Current SPY Price: ${current_price:.2f}",
+        ]
         for period in [25, 50, 75, 100]:
             val = smas.get(period)
             val_text = f"${val:.2f}" if isinstance(val, float) else "N/A"
@@ -39,4 +43,3 @@ class MessageFormatter:
     @staticmethod
     def format_unsubscribe_confirmation() -> str:
         return "You have unsubscribed from SPY SMA alerts."
-

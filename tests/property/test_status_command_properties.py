@@ -53,12 +53,18 @@ class FakeUpdate:
 @settings(max_examples=50, deadline=None)
 @given(
     subscribed=st.booleans(),
-    current_price=st.floats(min_value=300.0, max_value=700.0, allow_nan=False, allow_infinity=False),
+    current_price=st.floats(
+        min_value=300.0, max_value=700.0, allow_nan=False, allow_infinity=False
+    ),
     prices=st.lists(
         st.builds(
             PricePoint,
-            timestamp=st.datetimes(min_value=datetime(2024, 1, 1), max_value=datetime(2030, 1, 1)),
-            close=st.floats(min_value=300.0, max_value=700.0, allow_nan=False, allow_infinity=False),
+            timestamp=st.datetimes(
+                min_value=datetime(2024, 1, 1), max_value=datetime(2030, 1, 1)
+            ),
+            close=st.floats(
+                min_value=300.0, max_value=700.0, allow_nan=False, allow_infinity=False
+            ),
         ),
         min_size=100,
         max_size=200,
@@ -104,12 +110,18 @@ def test_status_command_completeness(
 # Feature: spy-sma-alert-bot, Property 22: Chart inclusion in status response
 @settings(max_examples=50, deadline=None)
 @given(
-    current_price=st.floats(min_value=300.0, max_value=700.0, allow_nan=False, allow_infinity=False),
+    current_price=st.floats(
+        min_value=300.0, max_value=700.0, allow_nan=False, allow_infinity=False
+    ),
     prices=st.lists(
         st.builds(
             PricePoint,
-            timestamp=st.datetimes(min_value=datetime(2024, 1, 1), max_value=datetime(2030, 1, 1)),
-            close=st.floats(min_value=300.0, max_value=700.0, allow_nan=False, allow_infinity=False),
+            timestamp=st.datetimes(
+                min_value=datetime(2024, 1, 1), max_value=datetime(2030, 1, 1)
+            ),
+            close=st.floats(
+                min_value=300.0, max_value=700.0, allow_nan=False, allow_infinity=False
+            ),
         ),
         min_size=100,
         max_size=200,
@@ -141,6 +153,11 @@ def test_chart_inclusion_in_status_response(
         _, photo_bytes, caption = fake_bot.sent[0]
         assert photo_bytes.startswith(b"\x89PNG")
         assert len(photo_bytes) > 5000
-        assert "SMA 25:" in caption and "SMA 50:" in caption and "SMA 75:" in caption and "SMA 100:" in caption
+        assert (
+            "SMA 25:" in caption
+            and "SMA 50:" in caption
+            and "SMA 75:" in caption
+            and "SMA 100:" in caption
+        )
 
     asyncio.run(run_test())

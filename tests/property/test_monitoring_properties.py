@@ -29,7 +29,10 @@ class FakePriceDataService:
         if self.historical_calls <= self.fail_historical_until:
             raise RuntimeError("historical failure")
         start = datetime.now() - timedelta(days=max(100, days))
-        points: list[PricePoint] = [PricePoint(timestamp=start + timedelta(days=i), close=400.0 + i) for i in range(max(100, days))]
+        points: list[PricePoint] = [
+            PricePoint(timestamp=start + timedelta(days=i), close=400.0 + i)
+            for i in range(max(100, days))
+        ]
         return points
 
 
@@ -42,13 +45,19 @@ class FakeBot:
 
 
 class FakeSubscriptions:
+    def __init__(self) -> None:
+        self.ids = [101, 202]
+
     async def get_all_subscribers(self) -> list[int]:
-        return [101, 202]
+        return list(self.ids)
 
 
 def build_prices(n: int) -> list[PricePoint]:
     start = datetime.now() - timedelta(days=n)
-    points: list[PricePoint] = [PricePoint(timestamp=start + timedelta(days=i), close=400.0 + i) for i in range(n)]
+    points: list[PricePoint] = [
+        PricePoint(timestamp=start + timedelta(days=i), close=400.0 + i)
+        for i in range(n)
+    ]
     return points
 
 
@@ -65,14 +74,14 @@ def test_monitoring_interval_compliance(interval: int) -> None:
     price = FakePriceDataService()
     bot = FakeBot()
     subs = FakeSubscriptions()
-    dispatcher = AlertDispatcher(bot=bot, subscriptions=subs, chart_generator=ChartGenerator())
+    dispatcher = AlertDispatcher(
+        bot=bot, subscriptions=subs, chart_generator=ChartGenerator()
+    )
     svc = MonitoringService(
         price_data=price,
         dispatcher=dispatcher,
         formatter=MessageFormatter(),
-        initial_backoff_seconds=0.0,
-        max_backoff_seconds=0.0,
-        max_retries=1,
+        retry=(0.0, 0.0, 1),
         sleep_fn=sleep_stub,
     )
 
@@ -93,7 +102,9 @@ def test_price_provider_error_resilience() -> None:
 
         bot = FakeBot()
         subs = FakeSubscriptions()
-        dispatcher = AlertDispatcher(bot=bot, subscriptions=subs, chart_generator=ChartGenerator())
+        dispatcher = AlertDispatcher(
+            bot=bot, subscriptions=subs, chart_generator=ChartGenerator()
+        )
 
         async def sleep_stub(seconds: float) -> None:
             assert seconds >= 0 or seconds < 0
@@ -103,9 +114,7 @@ def test_price_provider_error_resilience() -> None:
             price_data=price,
             dispatcher=dispatcher,
             formatter=MessageFormatter(),
-            initial_backoff_seconds=0.0,
-            max_backoff_seconds=0.0,
-            max_retries=3,
+            retry=(0.0, 0.0, 3),
             sleep_fn=sleep_stub,
         )
 
@@ -119,14 +128,16 @@ def test_invalid_data_rejection() -> None:
     async def run_test() -> None:
         class BadPriceService(FakePriceDataService):
             def fetch_historical_prices(self, days: int) -> list[PricePoint]:
-                # Return invalid data: future timestamp
+                self.historical_calls += 0
                 future = datetime.now() + timedelta(days=1)
                 return [PricePoint(timestamp=future, close=400.0)] * max(100, days)
 
         price = BadPriceService()
         bot = FakeBot()
         subs = FakeSubscriptions()
-        dispatcher = AlertDispatcher(bot=bot, subscriptions=subs, chart_generator=ChartGenerator())
+        dispatcher = AlertDispatcher(
+            bot=bot, subscriptions=subs, chart_generator=ChartGenerator()
+        )
 
         async def sleep_stub(seconds: float) -> None:
             assert seconds >= 0 or seconds < 0
@@ -136,9 +147,7 @@ def test_invalid_data_rejection() -> None:
             price_data=price,
             dispatcher=dispatcher,
             formatter=MessageFormatter(),
-            initial_backoff_seconds=0.0,
-            max_backoff_seconds=0.0,
-            max_retries=1,
+            retry=(0.0, 0.0, 1),
             sleep_fn=sleep_stub,
         )
 
@@ -153,7 +162,9 @@ def test_general_error_resilience() -> None:
         price = FakePriceDataService()
         bot = FakeBot()
         subs = FakeSubscriptions()
-        dispatcher = AlertDispatcher(bot=bot, subscriptions=subs, chart_generator=ChartGenerator())
+        dispatcher = AlertDispatcher(
+            bot=bot, subscriptions=subs, chart_generator=ChartGenerator()
+        )
         svc = MonitoringService(
             price_data=price,
             dispatcher=dispatcher,
@@ -164,6 +175,7 @@ def test_general_error_resilience() -> None:
         )
 
         async def faulty_check() -> list:
+            await asyncio.sleep(0)
             raise RuntimeError("boom")
 
         svc.check_for_crossovers = faulty_check  # type: ignore
@@ -178,9 +190,7 @@ def test_general_error_resilience() -> None:
             price_data=price,
             dispatcher=dispatcher,
             formatter=MessageFormatter(),
-            initial_backoff_seconds=0.0,
-            max_backoff_seconds=0.0,
-            max_retries=1,
+            retry=(0.0, 0.0, 1),
             sleep_fn=sleep_stub,
         )
 

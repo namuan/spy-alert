@@ -33,7 +33,9 @@ class TelegramBot:
         app.add_handler(CommandHandler("status", self.handle_status))
         return app
 
-    async def handle_start(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    async def handle_start(
+        self, update: Update, context: ContextTypes.DEFAULT_TYPE
+    ) -> None:
         chat = update.effective_chat
         if chat is None:
             return
@@ -42,7 +44,9 @@ class TelegramBot:
             chat_id=chat.id, text=self._formatter.format_subscribe_confirmation()
         )
 
-    async def handle_stop(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    async def handle_stop(
+        self, update: Update, context: ContextTypes.DEFAULT_TYPE
+    ) -> None:
         chat = update.effective_chat
         if chat is None:
             return
@@ -51,7 +55,9 @@ class TelegramBot:
             chat_id=chat.id, text=self._formatter.format_unsubscribe_confirmation()
         )
 
-    async def handle_status(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    async def handle_status(
+        self, update: Update, context: ContextTypes.DEFAULT_TYPE
+    ) -> None:
         chat = update.effective_chat
         if chat is None:
             return
@@ -62,7 +68,9 @@ class TelegramBot:
         closes = [p.close for p in prices]
         smas = SMACalculator.calculate_all_smas(closes)
 
-        caption = self._formatter.format_status_message(subscribed, current_price, smas)
+        caption = self._formatter.format_status_message(
+            subscribed=subscribed, current_price=current_price, smas=smas
+        )
         img_bytes = self._chart_generator.generate_chart(prices)
         await context.bot.send_photo(
             chat_id=chat.id, photo=BytesIO(img_bytes), caption=caption
@@ -70,4 +78,3 @@ class TelegramBot:
 
 
 __all__ = ["TelegramBot"]
-

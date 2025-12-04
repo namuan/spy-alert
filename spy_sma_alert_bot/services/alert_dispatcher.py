@@ -70,7 +70,9 @@ class AlertDispatcher:
 
         for attempt in range(1, self._max_retries + 1):
             try:
-                await self._bot.send_photo(chat_id=chat_id, photo=photo, caption=caption)
+                await self._bot.send_photo(
+                    chat_id=chat_id, photo=photo, caption=caption
+                )
                 return True
             except Exception as e:  # noqa: BLE001
                 logger.warning(
@@ -110,4 +112,3 @@ class AlertDispatcher:
 
 
 __all__ = ["AlertDispatcher"]
-

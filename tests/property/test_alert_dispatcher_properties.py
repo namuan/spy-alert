@@ -27,7 +27,10 @@ class FakeBot:
 
 def build_prices(n: int) -> list[PricePoint]:
     start = datetime.now() - timedelta(days=n)
-    points: list[PricePoint] = [PricePoint(timestamp=start + timedelta(days=i), close=400.0 + i) for i in range(n)]
+    points: list[PricePoint] = [
+        PricePoint(timestamp=start + timedelta(days=i), close=400.0 + i)
+        for i in range(n)
+    ]
     return points
 
 
@@ -36,8 +39,12 @@ def build_prices(n: int) -> list[PricePoint]:
 @given(
     direction=st.sampled_from(["above", "below"]),
     sma_period=st.sampled_from([25, 50, 75, 100]),
-    price=st.floats(min_value=300.0, max_value=700.0, allow_nan=False, allow_infinity=False),
-    sma_value=st.floats(min_value=300.0, max_value=700.0, allow_nan=False, allow_infinity=False),
+    price=st.floats(
+        min_value=300.0, max_value=700.0, allow_nan=False, allow_infinity=False
+    ),
+    sma_value=st.floats(
+        min_value=300.0, max_value=700.0, allow_nan=False, allow_infinity=False
+    ),
 )
 def test_chart_image_inclusion_in_crossover_alerts(
     direction: str, sma_period: int, price: float, sma_value: float

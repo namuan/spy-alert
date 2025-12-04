@@ -37,8 +37,7 @@ async def _run() -> None:
     )
     app = bot.build_application()
 
-    await app.initialize()
-    await app.start()
+    poll_task = asyncio.create_task(asyncio.to_thread(app.run_polling))
 
     dispatcher = AlertDispatcher(app.bot, subscriptions, chart_generator)
     monitoring = MonitoringService(price_service, dispatcher, formatter)
@@ -54,16 +53,16 @@ async def _run() -> None:
     except NotImplementedError:
         pass
 
-    await app.updater.start_polling()
     await stop_event.wait()
 
     monitor_task.cancel()
     with contextlib.suppress(asyncio.CancelledError):
         await monitor_task
 
-    await app.updater.stop()
     await app.stop()
     await app.shutdown()
+
+    await poll_task
 
 
 def main() -> None:
@@ -72,4 +71,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

@@ -21,9 +21,7 @@ class MonitoringService:
         dispatcher: AlertDispatcher,
         formatter: MessageFormatter,
         *,
-        initial_backoff_seconds: float = 30.0,
-        max_backoff_seconds: float = 300.0,
-        max_retries: int = 5,
+        retry: tuple[float, float, int] = (30.0, 300.0, 5),
         sleep_fn: Callable[[float], object] | None = None,
     ) -> None:
         self._price_data = price_data
@@ -31,9 +29,9 @@ class MonitoringService:
         self._formatter = formatter
         self._previous_states: dict[int, str] = {}
         self._last_prices: list[PricePoint] = []
-        self._initial_backoff_seconds = initial_backoff_seconds
-        self._max_backoff_seconds = max_backoff_seconds
-        self._max_retries = max_retries
+        self._initial_backoff_seconds, self._max_backoff_seconds, self._max_retries = (
+            retry
+        )
         self._sleep = sleep_fn or asyncio.sleep
 
     async def _fetch_current_price_with_backoff(self) -> float:
@@ -41,7 +39,7 @@ class MonitoringService:
         for attempt in range(1, self._max_retries + 1):
             try:
                 return self._price_data.fetch_current_price()
-            except Exception as e:
+            except RuntimeError as e:
                 logger.warning(
                     f"Price provider error fetching current price (attempt {attempt}/{self._max_retries}): {e}"
                 )
@@ -57,7 +55,7 @@ class MonitoringService:
         for attempt in range(1, self._max_retries + 1):
             try:
                 return self._price_data.fetch_historical_prices(days)
-            except Exception as e:
+            except RuntimeError as e:
                 logger.warning(
                     f"Price provider error fetching historical prices (attempt {attempt}/{self._max_retries}): {e}"
                 )
@@ -72,7 +70,7 @@ class MonitoringService:
         try:
             current_price = await self._fetch_current_price_with_backoff()
             prices = await self._fetch_historical_with_backoff(100)
-        except Exception as e:
+        except RuntimeError as e:
             logger.error(f"Error fetching price data: {e}")
             return []
 
@@ -87,7 +85,7 @@ class MonitoringService:
         }
 
         crossovers = CrossoverDetector.detect_crossovers(
-            current_price, smas, self._previous_states
+            current_price, smas, previous_states=self._previous_states
         )
 
         self._previous_states = CrossoverDetector.update_crossover_state(
@@ -120,7 +118,7 @@ class MonitoringService:
                     caption, prices
                 )
                 results.update(dict(dispatch_results.items()))
-            except Exception as e:
+            except RuntimeError as e:
                 logger.error(f"Error dispatching alerts: {e}")
 
         return results
@@ -134,7 +132,7 @@ class MonitoringService:
             try:
                 crossovers = await self.check_for_crossovers()
                 await self.process_crossovers(crossovers)
-            except Exception as e:
+            except (RuntimeError, ValueError) as e:
                 logger.error(f"Unexpected error during monitoring: {e}")
             finally:
                 i += 1

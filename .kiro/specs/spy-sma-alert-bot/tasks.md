@@ -198,7 +198,7 @@
   - Add graceful shutdown handling
   - _Requirements: 8.1, 8.2, 8.3, 8.4_
 
-- [ ] 14. Checkpoint - Ensure all tests pass
+- [x] 14. Checkpoint - Ensure all tests pass
   - Ensure all tests pass, ask the user if questions arise.
 
 - [ ]* 15. Create integration tests

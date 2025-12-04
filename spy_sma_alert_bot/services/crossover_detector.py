@@ -32,7 +32,7 @@ class CrossoverDetector:
         if isinstance(previous_or_smas, dict):
             prev_price = None
             smas_dict = previous_or_smas
-            prev_states = smas if isinstance(smas, dict) else {}
+            prev_states = previous_states or {}
         else:
             prev_price = float(previous_or_smas)
             smas_dict = smas or {}
@@ -41,48 +41,15 @@ class CrossoverDetector:
         crossovers: list[Crossover] = []
 
         for sma_period, sma_value in smas_dict.items():
-            if isinstance(prev_states, dict) and sma_period in prev_states:
-                previous_state = prev_states[sma_period]
-            elif prev_price is not None:
-                if prev_price > sma_value:
-                    previous_state = "above"
-                elif prev_price < sma_value:
-                    previous_state = "below"
-                else:
-                    previous_state = "unknown"
-            else:
-                previous_state = "unknown"
-
-            if current_price > sma_value:
-                current_position = "above"
-            elif current_price < sma_value:
-                current_position = "below"
-            else:
-                current_position = "unknown"
-
-            if previous_state == "unknown" or current_position == "unknown":
-                continue
-
-            if previous_state == "above" and current_position == "below":
-                crossovers.append(
-                    Crossover(
-                        sma_period=sma_period,
-                        direction="below",
-                        price=current_price,
-                        sma_value=sma_value,
-                        timestamp=None,
-                    )
-                )
-            elif previous_state == "below" and current_position == "above":
-                crossovers.append(
-                    Crossover(
-                        sma_period=sma_period,
-                        direction="above",
-                        price=current_price,
-                        sma_value=sma_value,
-                        timestamp=None,
-                    )
-                )
+            previous_state = CrossoverDetector._prev_state(
+                sma_period, sma_value, prev_price, prev_states or {}
+            )
+            current_position = CrossoverDetector._curr_pos(current_price, sma_value)
+            co = CrossoverDetector._mk_co(
+                sma_period, current_price, sma_value, previous_state, current_position
+            )
+            if co is not None:
+                crossovers.append(co)
 
         return crossovers
 
@@ -110,3 +77,56 @@ class CrossoverDetector:
                 new_states[sma_period] = "unknown"
 
         return new_states
+
+    @staticmethod
+    def _prev_state(
+        period: int,
+        sma_value: float,
+        prev_price: float | None,
+        prev_states: dict[int, str],
+    ) -> str:
+        if period in prev_states:
+            return prev_states[period]
+        if prev_price is None:
+            return "unknown"
+        if prev_price > sma_value:
+            return "above"
+        if prev_price < sma_value:
+            return "below"
+        return "unknown"
+
+    @staticmethod
+    def _curr_pos(current_price: float, sma_value: float) -> str:
+        if current_price > sma_value:
+            return "above"
+        if current_price < sma_value:
+            return "below"
+        return "unknown"
+
+    @staticmethod
+    def _mk_co(
+        period: int,
+        price: float,
+        sma_value: float,
+        prev_state: str,
+        curr_pos: str,
+    ) -> Crossover | None:
+        if prev_state == "unknown" or curr_pos == "unknown":
+            return None
+        if prev_state == "above" and curr_pos == "below":
+            return Crossover(
+                sma_period=period,
+                direction="below",
+                price=price,
+                sma_value=sma_value,
+                timestamp=None,
+            )
+        if prev_state == "below" and curr_pos == "above":
+            return Crossover(
+                sma_period=period,
+                direction="above",
+                price=price,
+                sma_value=sma_value,
+                timestamp=None,
+            )
+        return None

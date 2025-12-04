@@ -20,7 +20,7 @@ class CrossoverDetector:
     def detect_crossovers(
         current_price: float,
         previous_or_smas: float | dict[int, float],
-        smas: dict[int, float] | None = None,
+        maybe_smas_or_prev: dict[int, float] | dict[int, str] | None = None,
         previous_states: dict[int, str] | None = None,
     ) -> list[Crossover]:
         """Identifies crossovers between current and previous price/SMA states.
@@ -32,10 +32,13 @@ class CrossoverDetector:
         if isinstance(previous_or_smas, dict):
             prev_price = None
             smas_dict = previous_or_smas
-            prev_states = previous_states or {}
+            if previous_states is None and isinstance(maybe_smas_or_prev, dict):
+                prev_states = maybe_smas_or_prev  # type: ignore[assignment]
+            else:
+                prev_states = previous_states or {}
         else:
             prev_price = float(previous_or_smas)
-            smas_dict = smas or {}
+            smas_dict = (maybe_smas_or_prev or {}) if isinstance(maybe_smas_or_prev, dict) else {}
             prev_states = previous_states or {}
 
         crossovers: list[Crossover] = []

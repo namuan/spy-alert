@@ -68,12 +68,15 @@ def test_historical_data_sufficiency(days: int) -> None:
 
 
 # Feature: spy-sma-alert-bot, Property 8: Price data validation
+NOW = datetime.datetime(2025, 11, 1)
+FUTURE_BASE = datetime.datetime(2030, 1, 1)
+
 @composite
 def price_point_strategy(draw: st.DrawFn) -> PricePoint:
     """Generate valid PricePoint objects for testing."""
     timestamp = draw(
         st.datetimes(
-            min_value=datetime.datetime(2020, 1, 1), max_value=datetime.datetime.now()
+            min_value=datetime.datetime(2020, 1, 1), max_value=NOW
         )
     )
     close = draw(st.floats(min_value=0.01, max_value=1000.0))
@@ -102,7 +105,7 @@ def invalid_price_point_strategy(draw: st.DrawFn) -> dict:
             "timestamp": draw(
                 st.datetimes(
                     min_value=datetime.datetime(2020, 1, 1),
-                    max_value=datetime.datetime.now(),
+                    max_value=NOW,
                 )
             )
         }
@@ -110,8 +113,8 @@ def invalid_price_point_strategy(draw: st.DrawFn) -> dict:
         result = {
             "timestamp": draw(
                 st.datetimes(
-                    min_value=datetime.datetime.now() + datetime.timedelta(days=1),
-                    max_value=datetime.datetime.now() + datetime.timedelta(days=365),
+                    min_value=FUTURE_BASE,
+                    max_value=FUTURE_BASE + datetime.timedelta(days=365),
                 )
             ),
             "close": draw(st.floats(min_value=0.01, max_value=1000.0)),
@@ -121,7 +124,7 @@ def invalid_price_point_strategy(draw: st.DrawFn) -> dict:
             "timestamp": draw(
                 st.datetimes(
                     min_value=datetime.datetime(2020, 1, 1),
-                    max_value=datetime.datetime.now(),
+                    max_value=NOW,
                 )
             ),
             "close": draw(st.floats(min_value=-1000.0, max_value=-0.01)),
@@ -131,7 +134,7 @@ def invalid_price_point_strategy(draw: st.DrawFn) -> dict:
             "timestamp": draw(
                 st.datetimes(
                     min_value=datetime.datetime(2020, 1, 1),
-                    max_value=datetime.datetime.now(),
+                    max_value=NOW,
                 )
             ),
             "close": 0.0,

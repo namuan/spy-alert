@@ -1,15 +1,17 @@
-from datetime import datetime
 import asyncio
+from dataclasses import dataclass
+from datetime import datetime
 import io
+import os
 
-import hypothesis.strategies as st
 from hypothesis import given, settings
+import hypothesis.strategies as st
 
 from spy_sma_alert_bot.models import PricePoint
-from spy_sma_alert_bot.services.telegram_bot import TelegramBot
-from spy_sma_alert_bot.services.message_formatter import MessageFormatter
-from spy_sma_alert_bot.services.user_subscription_manager import UserSubscriptionManager
 from spy_sma_alert_bot.services.chart_generator import ChartGenerator
+from spy_sma_alert_bot.services.message_formatter import MessageFormatter
+from spy_sma_alert_bot.services.telegram_bot import TelegramBot
+from spy_sma_alert_bot.services.user_subscription_manager import UserSubscriptionManager
 
 
 class FakePriceDataService:
@@ -17,10 +19,10 @@ class FakePriceDataService:
         self._current_price = current_price
         self._prices = prices
 
-    def fetch_current_price(self) -> float:  # noqa: D401
+    def fetch_current_price(self) -> float:
         return self._current_price
 
-    def fetch_historical_prices(self, days: int) -> list[PricePoint]:  # noqa: D401
+    def fetch_historical_prices(self, days: int) -> list[PricePoint]:
         return sorted(self._prices, key=lambda p: p.timestamp)[-max(100, days) :]
 
 
@@ -32,14 +34,14 @@ class FakeBot:
         self.sent.append((chat_id, photo.getvalue(), caption))
 
 
+@dataclass
 class FakeContext:
-    def __init__(self, bot: FakeBot) -> None:
-        self.bot = bot
+    bot: FakeBot
 
 
+@dataclass
 class FakeChat:
-    def __init__(self, chat_id: int) -> None:
-        self.id = chat_id
+    id: int
 
 
 class FakeUpdate:
@@ -72,7 +74,7 @@ def test_status_command_completeness(
 
         price_service = FakePriceDataService(current_price, prices)
         bot = TelegramBot(
-            token="dummy",
+            token=os.getenv("TEST_TELEGRAM_TOKEN", ""),
             subscriptions=subs,
             formatter=MessageFormatter(),
             price_service=price_service,
@@ -122,7 +124,7 @@ def test_chart_inclusion_in_status_response(
 
         price_service = FakePriceDataService(current_price, prices)
         bot = TelegramBot(
-            token="dummy",
+            token=os.getenv("TEST_TELEGRAM_TOKEN", ""),
             subscriptions=subs,
             formatter=MessageFormatter(),
             price_service=price_service,
@@ -142,4 +144,3 @@ def test_chart_inclusion_in_status_response(
         assert "SMA 25:" in caption and "SMA 50:" in caption and "SMA 75:" in caption and "SMA 100:" in caption
 
     asyncio.run(run_test())
-

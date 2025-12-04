@@ -164,7 +164,7 @@
   - **Property 15: Telegram API error resilience**
   - **Validates: Requirements 6.2**
 
-- [ ] 12. Implement monitoring service
+- [x] 12. Implement monitoring service
   - Create MonitoringService class
   - Implement check_for_crossovers() to orchestrate price fetch, SMA calculation, and crossover detection
   - Implement process_crossovers() to generate charts and dispatch alerts
@@ -173,19 +173,19 @@
   - Add logging for all operations (info, warning, error levels)
   - _Requirements: 4.1, 6.1, 6.3, 6.4_
 
-- [ ]* 12.1 Write property test for monitoring interval compliance
+- [x]* 12.1 Write property test for monitoring interval compliance
   - **Property 9: Monitoring interval compliance**
   - **Validates: Requirements 4.1**
 
-- [ ]* 12.2 Write property test for price provider error resilience
+- [x]* 12.2 Write property test for price provider error resilience
   - **Property 14: Price provider error resilience**
   - **Validates: Requirements 6.1**
 
-- [ ]* 12.3 Write property test for invalid data rejection
+- [x]* 12.3 Write property test for invalid data rejection
   - **Property 16: Invalid data rejection**
   - **Validates: Requirements 6.3**
 
-- [ ]* 12.4 Write property test for general error resilience
+- [x]* 12.4 Write property test for general error resilience
   - **Property 17: General error resilience**
   - **Validates: Requirements 6.4**
 

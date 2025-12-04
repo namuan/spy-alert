@@ -2,8 +2,8 @@ import asyncio
 from datetime import datetime, timedelta
 import io
 
-import hypothesis.strategies as st
 from hypothesis import given, settings
+import hypothesis.strategies as st
 
 from spy_sma_alert_bot.models import PricePoint
 from spy_sma_alert_bot.services.alert_dispatcher import AlertDispatcher
@@ -19,7 +19,7 @@ class FakeBot:
         self.sent: list[tuple[int, bytes, str]] = []
         self.fail_for: set[int] = set()
 
-    async def send_photo(self, chat_id: int, photo: io.BytesIO, caption: str) -> None:  # noqa: D401
+    async def send_photo(self, chat_id: int, photo: io.BytesIO, caption: str) -> None:
         if chat_id in self.fail_for:
             raise RuntimeError("send_photo failure")
         self.sent.append((chat_id, photo.getvalue(), caption))
@@ -27,9 +27,7 @@ class FakeBot:
 
 def build_prices(n: int) -> list[PricePoint]:
     start = datetime.now() - timedelta(days=n)
-    points: list[PricePoint] = []
-    for i in range(n):
-        points.append(PricePoint(timestamp=start + timedelta(days=i), close=400.0 + i))
+    points: list[PricePoint] = [PricePoint(timestamp=start + timedelta(days=i), close=400.0 + i) for i in range(n)]
     return points
 
 

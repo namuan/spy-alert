@@ -6,15 +6,15 @@ subscribed users. It implements error resilience and retry logic for
 Telegram API operations.
 """
 
-from io import BytesIO
 import asyncio
+from io import BytesIO
 import logging
 from typing import Protocol
 
 from spy_sma_alert_bot.models import PricePoint
+
 from .chart_generator import ChartGenerator
 from .user_subscription_manager import UserSubscriptionManager
-
 
 logger = logging.getLogger(__name__)
 

@@ -160,7 +160,11 @@ class PriceDataService:
     def validate_price_data(data: list[PricePoint]) -> bool:
         if not data:
             return False
-        now = datetime.now()
+        
+        # Get a timezone-aware current time if needed, based on the first data point
+        first_tz = data[0].timestamp.tzinfo
+        now = datetime.now(first_tz) if first_tz else datetime.now()
+
         for point in data:
             if point.timestamp is None or point.timestamp > now:
                 return False

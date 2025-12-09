@@ -7,6 +7,10 @@ install: ## Install the virtual environment and install the pre-commit hooks
 	@uv sync
 	@uv run pre-commit install
 
+install-prod: ## Install only production dependencies
+	@echo "🚀 Installing production dependencies"
+	@uv sync --no-dev
+
 check: ## Run code quality tools.
 	@echo "🚀 Checking lock file consistency with 'pyproject.toml'"
 	@uv lock --locked
@@ -51,6 +55,18 @@ test-single: ## Run a single test file (usage: make test-single TEST=test_config
 run: ## Run the application
 	@echo "🚀 Running $(PROJECTNAME)"
 	@uv run python -m spy_sma_alert_bot.main
+
+REMOTE_HOST ?= spy-alert
+REMOTE_DIR ?= ~/spy-alert
+
+deploy: ## Deploy to Raspberry Pi
+	@echo "🚀 Deploying to $(REMOTE_HOST)..."
+	@ssh $(REMOTE_HOST) "mkdir -p $(REMOTE_DIR)"
+	@rsync -avz --exclude '.git' --exclude '.venv' --exclude '__pycache__' --exclude 'tests' --exclude 'assets' --exclude 'build' --exclude 'dist' --exclude '.idea' --exclude '.vscode' --exclude '.DS_Store' --exclude 'scripts' --exclude '*.egg-info' . $(REMOTE_HOST):$(REMOTE_DIR)
+
+start: deploy ## Deploy and start the bot in a screen session
+	@echo "🚀 Starting bot on $(REMOTE_HOST)..."
+	@ssh $(REMOTE_HOST) "cd $(REMOTE_DIR) && screen -dmS spy-alert uv run --no-dev python -m spy_sma_alert_bot.main"
 
 clean: ## Clean build artifacts
 	@echo "🚀 Removing build artifacts"

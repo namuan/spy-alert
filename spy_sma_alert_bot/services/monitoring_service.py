@@ -21,10 +21,7 @@ class MonitoringService:
         dispatcher: AlertDispatcher,
         formatter: MessageFormatter,
         *,
-        retry: tuple[float, float, int] = (30.0, 300.0, 5),
-        initial_backoff_seconds: float | None = None,
-        max_backoff_seconds: float | None = None,
-        max_retries: int | None = None,
+        retry_config: tuple[float, float, int] = (30.0, 300.0, 5),
         sleep_fn: Callable[[float], object] | None = None,
     ) -> None:
         self._price_data = price_data
@@ -32,14 +29,11 @@ class MonitoringService:
         self._formatter = formatter
         self._previous_states: dict[int, str] = {}
         self._last_prices: list[PricePoint] = []
-        r0, r1, r2 = retry
-        self._initial_backoff_seconds = (
-            initial_backoff_seconds if initial_backoff_seconds is not None else r0
-        )
-        self._max_backoff_seconds = (
-            max_backoff_seconds if max_backoff_seconds is not None else r1
-        )
-        self._max_retries = max_retries if max_retries is not None else r2
+
+        initial_backoff, max_backoff, max_retries = retry_config
+        self._initial_backoff_seconds = initial_backoff
+        self._max_backoff_seconds = max_backoff
+        self._max_retries = max_retries
         self._sleep = sleep_fn or asyncio.sleep
 
     async def _fetch_current_price_with_backoff(self) -> float:

@@ -71,13 +71,12 @@ def test_historical_data_sufficiency(days: int) -> None:
 NOW = datetime.datetime(2025, 11, 1)
 FUTURE_BASE = datetime.datetime(2030, 1, 1)
 
+
 @composite
 def price_point_strategy(draw: st.DrawFn) -> PricePoint:
     """Generate valid PricePoint objects for testing."""
     timestamp = draw(
-        st.datetimes(
-            min_value=datetime.datetime(2020, 1, 1), max_value=NOW
-        )
+        st.datetimes(min_value=datetime.datetime(2020, 1, 1), max_value=NOW)
     )
     close = draw(st.floats(min_value=0.01, max_value=1000.0))
     return PricePoint(timestamp=timestamp, close=close)

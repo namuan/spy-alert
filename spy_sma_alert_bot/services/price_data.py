@@ -5,11 +5,11 @@ SPY price data from yfinance, with caching and error handling capabilities.
 """
 
 from collections.abc import Iterable
+from dataclasses import dataclass
 from datetime import datetime, timedelta
 import time
 from typing import TYPE_CHECKING, Protocol, SupportsFloat, cast
 
-from pydantic import BaseModel
 import yfinance as yf
 
 from spy_sma_alert_bot.models import PricePoint
@@ -18,7 +18,8 @@ if TYPE_CHECKING:
     from collections.abc import Callable
 
 
-class CachedData(BaseModel):
+@dataclass
+class CachedData:
     """Model for caching price data with timestamp."""
 
     data: list[PricePoint]
@@ -160,7 +161,7 @@ class PriceDataService:
     def validate_price_data(data: list[PricePoint]) -> bool:
         if not data:
             return False
-        
+
         # Get a timezone-aware current time if needed, based on the first data point
         first_tz = data[0].timestamp.tzinfo
         now = datetime.now(first_tz) if first_tz else datetime.now()

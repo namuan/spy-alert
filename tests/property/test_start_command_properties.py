@@ -77,7 +77,7 @@ def test_start_command_sends_chart_and_price(
 ) -> None:
     async def run_test() -> None:
         subs = UserSubscriptionManager()
-        
+
         price_service = FakePriceDataService(current_price, prices)
         bot = TelegramBot(
             token=os.getenv("TEST_TELEGRAM_TOKEN", ""),

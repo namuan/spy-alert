@@ -33,23 +33,42 @@ class CrossoverDetector:
             prev_price = None
             smas_dict = previous_or_smas
             if previous_states is None and isinstance(maybe_smas_or_prev, dict):
-                prev_states = maybe_smas_or_prev  # type: ignore[assignment]
+                # We know maybe_smas_or_prev is prev_states in this branch
+                prev_states: dict[int, str] = maybe_smas_or_prev  # type: ignore
             else:
                 prev_states = previous_states or {}
         else:
             prev_price = float(previous_or_smas)
-            smas_dict = (maybe_smas_or_prev or {}) if isinstance(maybe_smas_or_prev, dict) else {}
+            # In this branch, maybe_smas_or_prev is smas_dict
+            if isinstance(maybe_smas_or_prev, dict):
+                # Filter out any non-float values to satisfy type checker
+                smas_dict = {
+                    k: float(v)
+                    for k, v in maybe_smas_or_prev.items()
+                    if isinstance(v, int | float)
+                }
+            else:
+                smas_dict = {}
             prev_states = previous_states or {}
 
         crossovers: list[Crossover] = []
 
         for sma_period, sma_value in smas_dict.items():
+            if not isinstance(sma_value, int | float):
+                continue
+
             previous_state = CrossoverDetector._prev_state(
-                sma_period, sma_value, prev_price, prev_states or {}
+                sma_period, float(sma_value), prev_price, prev_states or {}
             )
-            current_position = CrossoverDetector._curr_pos(current_price, sma_value)
+            current_position = CrossoverDetector._curr_pos(
+                current_price, float(sma_value)
+            )
             co = CrossoverDetector._mk_co(
-                sma_period, current_price, sma_value, previous_state, current_position
+                sma_period,
+                current_price,
+                float(sma_value),
+                previous_state,
+                current_position,
             )
             if co is not None:
                 crossovers.append(co)

@@ -59,10 +59,24 @@ run: ## Run the application
 REMOTE_HOST ?= spy-alert
 REMOTE_DIR ?= ~/spy-alert
 
-deploy: ## Deploy to Raspberry Pi
+deploy: ## Deploy to Raspberry Pi (Code + Docker files)
 	@echo "🚀 Deploying to $(REMOTE_HOST)..."
 	@ssh $(REMOTE_HOST) "mkdir -p $(REMOTE_DIR)"
 	@rsync -avz --exclude '.git' --exclude '.venv' --exclude '__pycache__' --exclude 'tests' --exclude 'assets' --exclude 'build' --exclude 'dist' --exclude '.idea' --exclude '.vscode' --exclude '.DS_Store' --exclude 'scripts' --exclude '*.egg-info' . $(REMOTE_HOST):$(REMOTE_DIR)
+
+docker-build: ## Build the Docker image locally
+	@echo "🚀 Building Docker image..."
+	@docker build -t spy-sma-alert-bot .
+
+docker-run: ## Run the Docker container locally
+	@echo "🚀 Running Docker container..."
+	@docker-compose up
+
+deploy-docker: deploy ## Deploy and run with Docker on Raspberry Pi
+	@echo "🚀 Starting Docker service on $(REMOTE_HOST)..."
+	@ssh $(REMOTE_HOST) "cd $(REMOTE_DIR) && docker compose up -d --build"
+	@echo "🚀 Bot is running in Docker. Check logs with: ssh $(REMOTE_HOST) 'cd $(REMOTE_DIR) && docker compose logs -f'"
+
 
 start: deploy ## Deploy and start the bot in a screen session
 	@echo "🚀 Starting bot on $(REMOTE_HOST)..."

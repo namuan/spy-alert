@@ -1,0 +1,16 @@
+services:
+  spy-alert:
+    build: .
+    image: spy-sma-alert-bot:latest
+    container_name: spy-alert
+    restart: unless-stopped
+    env_file:
+      - .env
+    volumes:
+      # Mount the current directory for easy access to logs or data if needed,
+      # though for production the image copy is sufficient.
+      # Mounting .env allows changing config without rebuilding.
+      - ./.env:/app/.env:ro
+    # Ensure logs are flushed immediately
+    environment:
+      - PYTHONUNBUFFERED=1

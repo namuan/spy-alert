@@ -1,4 +1,4 @@
-export PROJECTNAME=spy-sma-alert-bot
+export PROJECTNAME=$(shell basename "$(PWD)")
 
 .PHONY: $(shell grep -E '^[a-zA-Z0-9_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk -F: '{print $$1}')
 
@@ -56,31 +56,25 @@ run: ## Run the application
 	@echo "🚀 Running $(PROJECTNAME)"
 	@uv run python -m spy_sma_alert_bot.main
 
-REMOTE_HOST ?= spy-alert
-REMOTE_DIR ?= ~/spy-alert
+deploy: clean ## Copies any changed file to the server
+	ssh ${PROJECTNAME} -C 'bash -l -c "mkdir -vp ./${PROJECTNAME}"'
+	rsync -avzr \
+		.env \
+		pyproject.toml \
+		uv.lock \
+		Makefile \
+		scripts \
+		spy_sma_alert_bot \
+		${PROJECTNAME}:./${PROJECTNAME}
 
-deploy: ## Deploy to Raspberry Pi (Code + Docker files)
-	@echo "🚀 Deploying to $(REMOTE_HOST)..."
-	@ssh $(REMOTE_HOST) "mkdir -p $(REMOTE_DIR)"
-	@rsync -avz --exclude '.git' --exclude '.venv' --exclude '__pycache__' --exclude 'tests' --exclude 'assets' --exclude 'build' --exclude 'dist' --exclude '.idea' --exclude '.vscode' --exclude '.DS_Store' --exclude 'scripts' --exclude '*.egg-info' . $(REMOTE_HOST):$(REMOTE_DIR)
+start: deploy ## Sets up a screen session on the server and start the app
+	ssh ${PROJECTNAME} -C 'bash -l -c "./${PROJECTNAME}/scripts/setup_jobs.sh ${PROJECTNAME}"'
 
-docker-build: ## Build the Docker image locally
-	@echo "🚀 Building Docker image..."
-	@docker build -t spy-sma-alert-bot .
+stop: deploy ## Stop any running screen session on the server
+	ssh ${PROJECTNAME} -C 'bash -l -c "./${PROJECTNAME}/scripts/stop_jobs.sh ${PROJECTNAME}"'
 
-docker-run: ## Run the Docker container locally
-	@echo "🚀 Running Docker container..."
-	@docker-compose up
-
-deploy-docker: deploy ## Deploy and run with Docker on Raspberry Pi
-	@echo "🚀 Starting Docker service on $(REMOTE_HOST)..."
-	@ssh $(REMOTE_HOST) "cd $(REMOTE_DIR) && docker compose up -d --build"
-	@echo "🚀 Bot is running in Docker. Check logs with: ssh $(REMOTE_HOST) 'cd $(REMOTE_DIR) && docker compose logs -f'"
-
-
-start: deploy ## Deploy and start the bot in a screen session
-	@echo "🚀 Starting bot on $(REMOTE_HOST)..."
-	@ssh $(REMOTE_HOST) "cd $(REMOTE_DIR) && screen -dmS spy-alert uv run --no-dev python -m spy_sma_alert_bot.main"
+ssh: ## SSH into the target VM
+	ssh ${PROJECTNAME}
 
 clean: ## Clean build artifacts
 	@echo "🚀 Removing build artifacts"
@@ -97,15 +91,6 @@ package: clean ## Run installer
 
 install-macosx: package ## Installs application in users Application folder
 	./scripts/install-macosx.sh DeltaSpread.app
-
-setup: ## One command setup
-	@make install-macosx
-	@echo "Installation completed"
-
-ICON_PNG ?= assets/$(PROJECTNAME)-icon.png
-
-icons: ## Generate ICNS and ICO files from the PNG logo
-	@bash assets/generate-icons.sh $(ICON_PNG)
 
 .PHONY: help
 help:

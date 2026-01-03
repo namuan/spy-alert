@@ -86,12 +86,6 @@ clean: ## Clean build artifacts
 context: clean ## Build context file from application sources
 	llm-context-builder.py --extensions .py --ignored_dirs build dist generated venv .venv .idea .aider.tags.cache.v3 --print_contents --temp_file
 
-package: clean ## Run installer
-	@uv run pyinstaller main.spec --clean
-
-install-macosx: package ## Installs application in users Application folder
-	./scripts/install-macosx.sh DeltaSpread.app
-
 .PHONY: help
 help:
 	@uv run python -c "import re; \
